@@ -1,0 +1,39 @@
+# ---------------------------------------------------------------------------
+# Agentic Systems Foundations — dependencies
+# ---------------------------------------------------------------------------
+# The package + notebooks run with the CORE deps below. Everything else is
+# optional at runtime: if a library is missing the code degrades to an offline
+# "mock" path so the whole session still runs. Install the extras for the full
+# experience.
+#
+# The ONLY hard requirement is the Python standard library + python-dotenv.
+# An agent loop is control flow, not numerics — there is no numpy here.
+# ---------------------------------------------------------------------------
+
+# --- Core (always useful) ---
+python-dotenv>=1.0
+
+# --- LLM provider (OpenAI is the default stack) ---
+openai>=1.30            # gpt-4o-mini with tool calling (default)
+tiktoken>=0.7          # token counting for step/context budgets
+
+# --- Schema validation (we ship a from-scratch validator; this is the
+#     production-grade parallel mapping shown in notebook 03) ---
+jsonschema>=4.21
+
+# --- LangChain (shown as PARALLEL MAPPING, not the primary focus) ---
+langchain>=0.2
+langchain-core>=0.2
+langchain-openai>=0.1
+langchain-community>=0.2
+
+# --- Retrieval, for the search_docs tool (the C8 bridge) ---
+# The tool falls back to a pure-Python keyword scorer when these are absent,
+# so the agent still has something real to retrieve from.
+# numpy>=1.24
+# rank-bm25>=0.2.2
+
+# --- Local notebooks (Colab already has these) ---
+# Installed automatically by scripts/setup.sh and scripts/setup.ps1.
+# jupyterlab>=4.0
+# ipykernel>=6.29

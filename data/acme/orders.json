@@ -1,0 +1,65 @@
+{
+  "ACME-1042": {
+    "customer": "Rivera Analytics",
+    "plan": "Growth",
+    "status": "delivered",
+    "placed_on": "2026-07-14",
+    "delivered_on": "2026-07-16",
+    "amount_usd": 199.0,
+    "item": "Growth plan — monthly subscription"
+  },
+  "ACME-1043": {
+    "customer": "Noël & Sons",
+    "plan": "Starter",
+    "status": "processing",
+    "placed_on": "2026-08-30",
+    "delivered_on": null,
+    "amount_usd": 29.0,
+    "item": "Starter plan — monthly subscription"
+  },
+  "ACME-1044": {
+    "customer": "Halcyon Robotics",
+    "plan": "Enterprise",
+    "status": "delivered",
+    "placed_on": "2026-02-02",
+    "delivered_on": "2026-02-05",
+    "amount_usd": 48000.0,
+    "item": "Enterprise annual contract"
+  },
+  "ACME-1045": {
+    "customer": "Bright Harbour Ltd",
+    "plan": "Growth",
+    "status": "cancelled",
+    "placed_on": "2026-08-01",
+    "delivered_on": null,
+    "amount_usd": 199.0,
+    "item": "Growth plan — monthly subscription"
+  },
+  "ACME-1046": {
+    "customer": "Tessellate Design",
+    "plan": "Growth",
+    "status": "delivered",
+    "placed_on": "2026-08-28",
+    "delivered_on": "2026-08-29",
+    "amount_usd": 448.5,
+    "item": "Growth plan + 250 GB extra storage"
+  },
+  "ACME-1047": {
+    "customer": "Pemberton Foods",
+    "plan": "Starter",
+    "status": "refunded",
+    "placed_on": "2026-06-11",
+    "delivered_on": "2026-06-12",
+    "amount_usd": 29.0,
+    "item": "Starter plan — monthly subscription"
+  },
+  "ACME-1048": {
+    "customer": "Grid & Ochre",
+    "plan": "Growth",
+    "status": "shipped",
+    "placed_on": "2026-09-01",
+    "delivered_on": null,
+    "amount_usd": 199.0,
+    "item": "Growth plan — monthly subscription"
+  }
+}
