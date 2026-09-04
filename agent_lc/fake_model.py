@@ -76,7 +76,12 @@ class FakeToolCallingModel(BaseChatModel):
         return "fake-tool-calling"
 
     def bind_tools(self, tools: Sequence, **kwargs: Any) -> "FakeToolCallingModel":
-        clone = FakeToolCallingModel(fault=self.fault)
+        # `self.__class__`, not `FakeToolCallingModel`. Hard-coding the class
+        # silently discards any subclass — so a test that subclasses this to
+        # script a specific tool sequence gets the generic router instead, and
+        # the test passes for the wrong reason. Exactly the kind of bug a test
+        # double should not have.
+        clone = self.__class__(fault=self.fault)
         clone.bound_tools = list(tools)
         return clone
 

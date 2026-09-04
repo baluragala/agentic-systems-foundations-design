@@ -1,5 +1,4 @@
 # Worked Solutions — Agentic Systems Foundations
-
 Answers to [`../exercises.md`](../exercises.md). Where an exercise has no single right answer, the solution says what a **good** answer contains and what a common **wrong** answer looks like.
 
 All numbers below were produced with the **offline mock** (no API key). With a real model the trajectories differ; the reasoning does not.

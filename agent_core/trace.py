@@ -299,11 +299,11 @@ def compare(traces: Dict[str, Trace]) -> str:
     """
     Render several labelled runs as one table.
 
-    The C8 package made its arguments by comparing outputs — chunk sizes,
+    The RAG package made its arguments by comparing outputs — chunk sizes,
     retrieval strategies — rather than by assertion. This is the agentic
     equivalent: run the same goal with and without a budget, with a loose and a
     strict schema, with one skill and with three, and put the traces side by
-    side. "Hybrid beat dense" was C8's evidence-based moment; "the budgeted run
+    side. "Hybrid beat dense" was the RAG session's evidence-based moment; "the budgeted run
     stopped at 4 steps and the unbudgeted one hit 25" is this session's.
     """
     width = max((len(label) for label in traces), default=8)

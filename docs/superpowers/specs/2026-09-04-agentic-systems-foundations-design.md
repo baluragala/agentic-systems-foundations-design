@@ -1,8 +1,8 @@
 # Agentic Systems Foundations — Teaching Package Design
 
 **Date:** 2026-09-04
-**Source agenda:** `Agenda_C9_GenAI_Agentic_Systems_Foundations_Learner.pdf` (C9-W1-S1, 180-min live session)
-**Predecessor package:** `building-rag-pipelines` (C8-W4-S1) — this package deliberately mirrors its structure, pedagogy, and provider strategy so learners carry muscle memory forward.
+**Source agenda:** `Agenda_C9_GenAI_Agentic_Systems_Foundations_Learner.pdf` (180-minute live session)
+**Predecessor package:** `building-rag-pipelines` — this package deliberately mirrors its structure, pedagogy, and provider strategy so learners carry muscle memory forward.
 
 ## Goal
 
@@ -12,8 +12,8 @@ A complete, hands-on teaching package for a 180-minute session that teaches agen
 
 ## Non-negotiable constraints (from agenda + user)
 
-- **Pedagogy:** every section runs **WHY → WHAT → HOW**, inherited from C8. HOW is **from-scratch first, LangChain as a parallel mapping** — never framework-first.
-- **Recurring question** (the C9 analogue of C8's *"what if this step is poorly designed?"*):
+- **Pedagogy:** every section runs **WHY → WHAT → HOW**, inherited from the RAG session. HOW is **from-scratch first, LangChain as a parallel mapping** — never framework-first.
+- **Recurring question** (the counterpart to the RAG session's *"what if this step is poorly designed?"*):
   > **"What does this step look like when it goes wrong — and where would you see it in the trace?"**
 
   This threads control, tracing, and failure analysis through every earlier section rather than quarantining them at the end.
@@ -21,7 +21,7 @@ A complete, hands-on teaching package for a 180-minute session that teaches agen
 - **Predict-before-run** cells and an explicit output comparison in every notebook.
 - **Stack:** OpenAI default (`gpt-4o-mini`), LangChain as parallel mapping, deterministic offline **mock** fallback.
 - **Notebooks must be Google Colab compatible** (self-bootstrapping: pip install, clone repo, key via Colab Secrets / `getpass`).
-- **Scenario continuity:** reuse the fictional **Acme Cloud** company and corpus from C8. The `search_docs` tool is a genuine mini-retriever, making "RAG is *a tool* an agent calls, not the architecture" a live demonstration rather than an assertion.
+- **Scenario continuity:** reuse the fictional **Acme Cloud** company and corpus from the RAG session. The `search_docs` tool is a genuine mini-retriever, making "RAG is *a tool* an agent calls, not the architecture" a live demonstration rather than an assertion.
 
 ## The recurring diagram
 
@@ -50,7 +50,7 @@ GOAL ─▶ ┌─ STATE ─▶ THINK ─▶ ACT ─▶ OBSERVE ─┐ ─▶ [t
 
 ### 2. `MockToolCallLLM` — the critical design decision
 
-In C8 the mock LLM only had to emit **text**. Here it must **decide tool calls**, or a keyless classroom cannot run notebooks 02–07 at all.
+In the RAG package's mock LLM only had to emit **text**. Here it must **decide tool calls**, or a keyless classroom cannot run notebooks 02–07 at all.
 
 `MockToolCallLLM` is a deterministic router: it matches the goal against the registered tool schemas, tracks which tools the message history already shows as called, emits the next call, and emits a final answer once it holds observations. It is labelled `[mock-llm]` in all output and never invents facts — it answers extractively from observations.
 
@@ -60,7 +60,7 @@ It earns its keep twice: it is also the **fault injector** for notebook 06. Flip
 
 | Tool | What it teaches |
 |---|---|
-| `search_docs(query, k)` | Agent calling a retriever; RAG as *a tool*, not the architecture. The explicit C8→C9 bridge. |
+| `search_docs(query, k)` | Agent calling a retriever; RAG as *a tool*, not the architecture. The explicit bridge back to the RAG session. |
 | `get_order_status(order_id)` | Strict ID schema → validation and coercion failures. |
 | `calculate(expression)` | Why an LLM should delegate arithmetic. |
 | `check_refund_eligibility(order_id, reason)` | Multi-argument schema with an enum constraint. |
@@ -68,13 +68,13 @@ It earns its keep twice: it is also the **fault injector** for notebook 06. Flip
 
 ### 4. `notebooks/` — 7 Colab-compatible guided notebooks
 
-Cell rhythm inherited from C8: Colab badge → title/duration/mode + loop banner → bootstrap → provider cell → **WHY** → **WHAT** → **HOW (from scratch)** → **✋ predict before you run** → output comparison → **HOW (LangChain parallel mapping)** → recap/next.
+Cell rhythm inherited from the RAG session: Colab badge → title/duration/mode + loop banner → bootstrap → provider cell → **WHY** → **WHAT** → **HOW (from scratch)** → **✋ predict before you run** → output comparison → **HOW (LangChain parallel mapping)** → recap/next.
 
 Notebook 02 derives a working agent in ~30 inline lines *before* switching to the package version, so "from first principles" is earned rather than asserted.
 
 ### 5. `data/`
 
-- `data/corpus/` — Acme Cloud docs carried over from C8, plus a refunds policy, so `search_docs` retrieves from real text.
+- `data/corpus/` — Acme Cloud docs carried over from the RAG session, plus a refunds policy, so `search_docs` retrieves from real text.
 - `data/acme/orders.json` — order records backing the structured tools.
 - `data/tasks/agent_tasks.jsonl` — task suite tagged `single_tool` / `multi_tool` / `multi_hop` / `unanswerable` / `trap`. The **unanswerable and trap tasks are the negative tests**: correct behaviour is refuse-or-escalate, not fabricate.
 
@@ -163,11 +163,62 @@ handling, routing, `create_react_agent`, checkpointing, and the trace adapter.
 **Known gap:** the `ChatOpenAI` code path has not been run against the live API (no key
 available at build time). Everything else in the track is executed in CI.
 
+## Amendment — the enterprise reference (`acme_support_agent/`)
+
+Requested after the LangGraph track: **one full end-to-end enterprise-grade
+example, with LangGraph as the final track.**
+
+### What it adds over `agent_lc`
+
+`agent_core` and `agent_lc` are safe to run in a classroom because **every tool
+is read-only**. This track introduces exactly one side-effecting tool
+(`issue_refund`) and then builds the controls that make that acceptable.
+
+| Concern | Module | Notes |
+|---|---|---|
+| Human-in-the-loop approval | `graph.py` | `interrupt()` between decision and side effect |
+| Durable state | `runtime.py` | SQLite checkpointer; resumable across processes |
+| Guardrails in code | `guardrails.py` | PII, injection, grounding, forbidden commitments |
+| Audit trail | `audit.py` | append-only, attributable, permanent |
+| Config validated at boot | `settings.py` | pydantic-settings; safety rules NOT env-configurable |
+| Observability | `observability.py` | JSON logs, correlation ids, cost estimation |
+| Evaluation gate | `evaluate.py` | safety gated at 100%, separate from capability |
+| Service | `service.py` | FastAPI; the approval round trip as two HTTP requests |
+| CLI | `cli.py` | interactive approvals in a terminal |
+
+New notebook **09** (`enterprise_reference`), an appendix outside the session clock.
+
+### The load-bearing design decision
+
+`check_refund_eligibility` (decide) is a **separate tool** from `issue_refund`
+(act). That split is what creates a place to put the approval gate. Fusing them
+would leave nowhere to interrupt — the money would already have moved.
+
+### Verification
+
+`scripts/check_enterprise.py` — 55 checks, no API key: settings validation,
+guardrails, the approval-gate logic, the full interrupt/suspend/resume cycle,
+the denial path, idempotency, the tool's own self-defence, audit integrity, the
+evaluation gate, and the HTTP service including attribution enforcement.
+
+**Known gap (unchanged):** the `ChatOpenAI` call itself is still unexercised
+against the live API.
+
+### Two bugs found by verifying
+
+- `FakeToolCallingModel.bind_tools` hard-coded its own class, silently
+  discarding subclasses — so a test scripting a tool sequence got the generic
+  router instead and passed for the wrong reason.
+- Code before `interrupt()` re-runs on resume, so the `approval_required` audit
+  record was written twice per approval. Fixed with a `dedupe_key`; the rule is
+  now documented in `audit.py`: **anything before an `interrupt()` must be safe
+  to do twice.**
+
 ## Out of scope
 
 Explicitly excluded by the user during design:
 
-- A long-form deep-dive student guide (the analogue of C8's `improving_rag_reducing_hallucinations.md`).
+- A long-form deep-dive student guide (the analogue of the RAG package's `improving_rag_reducing_hallucinations.md`).
 - A `pytest` suite over `agent_core`.
 
 ## Success criteria

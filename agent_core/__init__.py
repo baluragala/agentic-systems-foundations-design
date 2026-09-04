@@ -2,7 +2,7 @@
 agent_core — a from-scratch agentic system, built to be read.
 =============================================================
 
-The teaching package for **Agentic Systems Foundations** (C9-W1-S1).
+The teaching package for **Agentic Systems Foundations** .
 
     An agent is not a smarter model. It is a loop over explicit state.
     Tools give it reach, schemas give it reliability, skills give it scale,

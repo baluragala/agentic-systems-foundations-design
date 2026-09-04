@@ -82,13 +82,13 @@
 </head>
 <body>
 <div class="reveal">
-  <div class="footer">Agentic Systems Foundations &middot; C9-W1-S1</div>
+  <div class="footer">Agentic Systems Foundations</div>
   <div class="slides">
 
   <section>
     <section class="center">
       <h1>Agentic Systems Foundations</h1>
-      <p><small>C9-W1-S1 &middot; 180 minutes &middot; hands-on</small></p>
+      <p><small>180 minutes &middot; hands-on</small></p>
       <svg class="loop" viewBox="0 0 880 205" xmlns="http://www.w3.org/2000/svg">
 <defs><marker id="ah" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#5b6478"/></marker><marker id="ahl" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#f7d51d"/></marker></defs>
 <path class="feedback" d="M775 60 L775 22 L180 22 L180 56" fill="none" marker-end="url(#ahl)"/><text class="fblabel" x="478" y="16" text-anchor="middle">update state &#8212; this is what makes it an agent</text>
@@ -126,7 +126,7 @@
         <li>Agents fail <b>across time</b>, with nothing thrown &mdash; so the
             question has to be about <b>evidence</b>, not exceptions</li>
       </ul>
-      <aside class='notes'>This is the C9 analogue of C8's recurring question. Threading failure analysis through every section rather than saving it for the end is deliberate: by notebook 06 the room already knows what to look for.</aside>
+      <aside class='notes'>This is the counterpart to the RAG session's recurring question. Threading failure analysis through every section rather than saving it for the end is deliberate: by notebook 06 the room already knows what to look for.</aside>
     </section>
 
     <section>
@@ -174,7 +174,7 @@
       <h2>Pipeline vs agent <span class="badge why">WHY</span></h2>
       <div class="two">
         <div>
-          <h3>Pipeline (C8 RAG)</h3>
+          <h3>Pipeline (RAG)</h3>
           <pre><code>question
   &rarr; retrieve
   &rarr; augment
@@ -200,7 +200,7 @@
       <table>
         <tr><th>System</th><th>Goal</th><th>State</th><th>Iterative</th><th>Verdict</th></tr>
         <tr><td>Single LLM call</td><td>&#9989;</td><td>&#10060;</td><td>&#10060;</td><td>Not agentic</td></tr>
-        <tr><td>C8 RAG pipeline</td><td>&#9989;</td><td>&#10060;</td><td>&#10060;</td><td>Not agentic &mdash; and that is fine</td></tr>
+        <tr><td>A RAG pipeline</td><td>&#9989;</td><td>&#10060;</td><td>&#10060;</td><td>Not agentic &mdash; and that is fine</td></tr>
         <tr><td><code class="inline">for</code> loop &times;5</td><td>&#10060;</td><td>&#10060;</td><td>&#9888;</td><td>Repeats; does not decide</td></tr>
         <tr><td>Chatbot with history</td><td>&#9888;</td><td>&#9989;</td><td>&#10060;</td><td>Remembers, one shot per turn</td></tr>
         <tr><td>LLM + tools + loop + state</td><td>&#9989;</td><td>&#9989;</td><td>&#9989;</td><td><b>Agentic</b></td></tr>
@@ -697,7 +697,7 @@ budget-only -> max_steps (8) reached</code></pre>
       <pre><code class="language-python">broken_agent("no_progress_loop").run(goal)   # identical for everyone, free, instant</code></pre>
       <div class="key">The mock being a <b>real tool-call router</b> rather than a text
         stub is what buys this. Same fixture, every learner, no API spend.</div>
-      <aside class='notes'>This is the payoff for the design decision in config.py, and the agentic counterpart to C8's closing 'debug a bad RAG output' workflow.</aside>
+      <aside class='notes'>This is the payoff for the design decision in config.py, and the agentic counterpart to the RAG session's closing 'debug a bad RAG output' workflow.</aside>
     </section>
 
     <section>
@@ -712,7 +712,7 @@ budget-only -> max_steps (8) reached</code></pre>
       </table>
       <div class="warn">1&ndash;3 announce themselves. <b>4&ndash;5 are green across the
         board and wrong</b> &mdash; and #5 is the one that reaches customers.</div>
-      <aside class='notes'>Point out that an ungrounded agent answer IS a RAG hallucination one level up. The C8 failure did not go away when we added a loop - it got harder to see.</aside>
+      <aside class='notes'>Point out that an ungrounded agent answer IS a RAG hallucination one level up. The RAG failure did not go away when we added a loop - it got harder to see.</aside>
     </section>
 
     <section>
@@ -789,7 +789,7 @@ budget-only -> max_steps (8) reached</code></pre>
       <h2>Where this meets last session</h2>
       <div class="key"><code class="inline">search_docs</code> is a <b>real retriever</b>
         over the same Acme corpus you built a RAG pipeline on.<br><br>
-        The whole of C8 &mdash; loading, chunking, retrieval, ranking &mdash;
+        The whole of the RAG session &mdash; loading, chunking, retrieval, ranking &mdash;
         collapsed into <b>one entry in a tool registry</b>.</div>
       <p><b>RAG is not an alternative to agents. It is a tool an agent calls.</b></p>
       <p>The better question is not <em>&ldquo;RAG or an agent?&rdquo;</em> but

@@ -19,7 +19,7 @@ with an environment variable.
 
 THE IMPORTANT PART: the mock decides TOOL CALLS
 -----------------------------------------------
-In the C8 RAG package the offline mock only had to emit text, because a RAG
+In the RAG package the offline mock only had to emit text, because a RAG
 pipeline is a straight line and text was the last step. An agent is a *loop*,
 and the thing being looped on is a decision. A mock that only produced prose
 would leave a keyless classroom unable to run notebooks 02 through 07 — which
@@ -153,8 +153,8 @@ def _stem(word: str) -> str:
 
     It exists because "the Growth plan" should match a tool description that
     says "plans", and without it the router misses obvious matches. Real
-    retrieval systems do this properly (and C8's BM25 discussion is the place
-    that got covered); here the one-line version buys most of the benefit.
+    retrieval systems do this properly with stemmers and BM25; here the
+    one-line version buys most of the benefit.
     """
     return word[:-1] if len(word) > 4 and word.endswith("s") else word
 
@@ -459,7 +459,7 @@ class MockToolCallLLM:
 
         The refusal branch matters as much as the answer branch. An agent that
         called no tool successfully has no grounds to say anything, and saying
-        so is the correct behaviour — it is the agentic analogue of C8's
+        so is the correct behaviour — it is the agentic analogue of the RAG session's
         grounded "I don't know based on the provided context", and it is what
         the `unanswerable` tasks in `data/tasks/agent_tasks.jsonl` test for.
         """

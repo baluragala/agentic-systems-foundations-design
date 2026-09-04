@@ -38,7 +38,7 @@ Two reasons, one pedagogical and one practical.
 Pedagogical: a learner who has never seen validation implemented treats it as
 magic and therefore as optional. Ninety lines they can read removes the magic.
 Notebook 03 shows `jsonschema` immediately afterwards as the parallel mapping —
-the same lesson C8 taught with from-scratch chunking vs LangChain splitters.
+the same lesson the RAG session taught with from-scratch chunking vs LangChain splitters.
 
 Practical: LLM tool arguments need *coercion*, not just validation. The string
 `"3"` for an integer parameter is a model quirk, not a user error, and rejecting

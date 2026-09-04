@@ -175,7 +175,7 @@ class Agent:
         WHY an agent needs a task suite at all: you cannot eyeball agent quality.
         A single run looks fine or looks broken, and neither tells you whether
         yesterday's prompt change helped. The suite gives you the agentic
-        equivalent of C8's retrieval metrics — a number that moves when you
+        equivalent of the RAG session's retrieval metrics — a number that moves when you
         change something.
 
         Each task may declare:

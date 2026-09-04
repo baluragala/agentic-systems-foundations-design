@@ -33,7 +33,7 @@ ones, and #5 is the one that reaches customers.
 
 HOW TO DEBUG AN AGENT — the workflow this session ends on
 ---------------------------------------------------------
-The C8 session closed by localising a bad RAG answer to a stage. The agentic
+The RAG session closed by localising a bad RAG answer to a stage. The agentic
 version localises to a *step*, and the order of questions matters:
 
   1. Did it call the right tools?     No -> routing / descriptions / scoping

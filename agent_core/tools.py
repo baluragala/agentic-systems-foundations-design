@@ -197,7 +197,7 @@ class Tool:
         """
         A LangChain StructuredTool wrapping this same function.
 
-        The parallel mapping, in the C8 tradition: the framework gives you a
+        The parallel mapping, in the tradition of the RAG package: the framework gives you a
         nicer object and a bigger ecosystem, and it still cannot decide your
         enum values or your ID format for you. Import is local so the package
         has no hard LangChain dependency.

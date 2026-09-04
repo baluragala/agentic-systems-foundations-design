@@ -1,5 +1,4 @@
 # Exercises — Agentic Systems Foundations
-
 Worked solutions in [`solutions/solutions.md`](solutions/solutions.md). **Attempt each one before looking** — several are designed so that the obvious answer is wrong, and the value is in noticing that yourself.
 
 **Sections 01–06 and the capstone run with no API key.** Set one if you have it; the exercises are written so the lesson survives either way, and each says where the offline mock's limits show. The **Appendix** exercises cover the LangGraph track — three of the five still need no key, and the two that do are marked.

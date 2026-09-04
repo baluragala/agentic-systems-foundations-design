@@ -1,6 +1,5 @@
 # Instructor Guide — Agentic Systems Foundations
-
-**Format:** 180-minute hands-on session (C9-W1-S1)
+**Format:** 180-minute hands-on session
 **Modality:** Live coding + discussion. 7 Colab-compatible notebooks driven from a shared `agent_core` package, plus an appendix notebook (08) on the LangGraph production track.
 **Pedagogy:** Every section runs **WHY → WHAT → HOW**. HOW is **from-scratch first, LangChain as a parallel mapping**.
 **Recurring question (ask it every section):** ***"What does this step look like when it goes wrong — and where would you see it in the trace?"***
@@ -16,7 +15,7 @@
 
 ### 1.1 One-paragraph overview
 
-Learners arrive knowing *that* agents call tools in a loop. This session makes them fluent in the **mechanics and the failure modes**. They build a loop from nothing, discover that **state** — not the loop — is what makes it agentic, integrate tools behind validated schemas, scope those tools into **skills**, add **termination and tracing**, and finish by diagnosing five deterministic failures from traces alone. The through-line is causal, exactly as C8's was: *a loose schema → a rejected call → a wasted step → an exhausted budget → no answer.*
+Learners arrive knowing *that* agents call tools in a loop. This session makes them fluent in the **mechanics and the failure modes**. They build a loop from nothing, discover that **state** — not the loop — is what makes it agentic, integrate tools behind validated schemas, scope those tools into **skills**, add **termination and tracing**, and finish by diagnosing five deterministic failures from traces alone. The through-line is causal, exactly as the RAG session's was: *a loose schema → a rejected call → a wasted step → an exhausted budget → no answer.*
 
 ### 1.2 Learning objectives (from the agenda)
 
@@ -35,10 +34,10 @@ Thumbs up/down. You are calibrating, not gatekeeping:
 - "You've called an LLM API and built a prompt." (Y/N)
 - "You've seen tool calling / function calling at least once." (Y/N)
 - "You're comfortable with Python functions, type hints and JSON." (Y/N)
-- "You did the RAG session (C8)." (Y/N)
+- "You did the RAG session (the previous session)." (Y/N)
 
 **If several are shaky on tool calling:** good — notebook 03 builds it from the schema up. Say so.
-**If several missed C8:** the only dependency is conceptual (RAG = retriever + generator). `search_docs` works regardless.
+**If several missed the RAG session:** the only dependency is conceptual (RAG = retriever + generator). `search_docs` works regardless.
 **If several lack API keys:** point at Section 2.3 immediately. **The entire session runs with no key.**
 
 ---
@@ -69,7 +68,7 @@ Every notebook opens with the same two cells:
 
 This is the most important operational fact of the session.
 
-In C8 the mock only had to emit *text*. An agent loops on a **decision**, so a text-only mock would leave a keyless learner unable to run notebooks 02–07 — i.e. unable to do the session. So `MockToolCallLLM` **decides tool calls**:
+In the RAG package's mock only had to emit *text*. An agent loops on a **decision**, so a text-only mock would leave a keyless learner unable to run notebooks 02–07 — i.e. unable to do the session. So `MockToolCallLLM` **decides tool calls**:
 
 - It routes on the tool **schemas, examples and descriptions**, scoring each candidate.
 - It tracks what it already called by **reading the transcript** — exactly as a real model does.
@@ -132,7 +131,7 @@ Put this up at 0:00 and physically point at the current stage each time you move
 
 > **The hook, and it lands every time:** ask who has shipped something they call an agent. Then ask: *did the model choose the steps, or did you?* That question settles it, kindly.
 
-Contrast the C8 pipeline (`retrieve → augment → generate`, fixed, written by you) with the agent cycle (length decided at runtime by the model).
+Contrast the RAG pipeline (`retrieve → augment → generate`, fixed, written by you) with the agent cycle (length decided at runtime by the model).
 
 **0:08–0:14 — WHAT.** The three properties table. **Spend your time on the RAG row.** Do not let anyone leave believing pipelines are the inferior thing you graduate from — they are the right answer whenever you can draw the flowchart.
 
@@ -351,7 +350,7 @@ wrong_tool          QUIET  done       2 steps  0% err   ← looks perfect
 ungrounded_answer   QUIET  done       2 steps  0% err   ← looks perfect
 ```
 
-**Land this:** the two quiet ones have status `done`, 0% errors, no repetition. **Nothing to grep for.** And an ungrounded agent answer *is* a RAG hallucination one level up — the C8 failure did not go away when we added a loop; it got harder to see.
+**Land this:** the two quiet ones have status `done`, 0% errors, no repetition. **Nothing to grep for.** And an ungrounded agent answer *is* a RAG hallucination one level up — the RAG failure did not go away when we added a loop; it got harder to see.
 
 **2:44–2:50 — HOW.** The four-question workflow, in order:
 
@@ -386,7 +385,7 @@ Run the end-to-end cell with `verbose=True` so the room watches the loop turn on
 
 1. **Say the central thesis for the third time.**
 2. The four takeaways (loop over state / structure = reliability / skills = scale / control + trace).
-3. **The C8 bridge:** `search_docs` is a real retriever over the same corpus. The whole of last session collapsed into one registry entry. ***RAG is not an alternative to agents; it is a tool an agent calls.***
+3. **The RAG bridge:** `search_docs` is a real retriever over the same corpus. The whole of last session collapsed into one registry entry. ***RAG is not an alternative to agents; it is a tool an agent calls.***
 4. **The one habit:** *read the trace before you change the prompt.* Only question 4 is a prompt problem; three times out of four the bug is above it.
 
 Point at `teaching/exercises.md` for the capstone. Take questions.
@@ -461,7 +460,7 @@ Three layers, in order of reliability: don't give it the tool; require confirmat
 Both, and deliberately. Schemas go through the API and describe the *shape* of a call. The prompt list describes the *judgement* — when to prefer this tool over that one. Shape is what models get right anyway; judgement is what they get wrong.
 
 **"Why not just use LangChain / the Agents SDK?"**
-Do, in production. But `max_iterations=10` is still a number you choose, tool descriptions are still yours to write, and when it misbehaves you still need to read a trace. The framework abstracts the mechanics, not the design decisions — the same argument C8 made about text splitters.
+Do, in production. But `max_iterations=10` is still a number you choose, tool descriptions are still yours to write, and when it misbehaves you still need to read a trace. The framework abstracts the mechanics, not the design decisions — the same argument the RAG session made about text splitters.
 
 **"How do I know if I need an agent at all?"**
 Try to draw the flowchart. If you can, write the flowchart — cheaper, faster, testable. If the path genuinely depends on what you find along the way, you need the loop.
@@ -481,7 +480,7 @@ Try to draw the flowchart. If you can, write the flowchart — cheaper, faster, 
 
 - **§05:** run only the two-policies comparison and `trace.show()`. Skip reflection entirely — say one sentence and point at the notebook. **Saves 8 min.**
 - **§06:** run the five-summaries cell and go straight to the **two quiet failures**. Skip the mystery-diagnosis exercise (it is Exercise 6). **Saves 8 min.**
-- Protect the wrap-up. Ending on the C8 bridge and "read the trace before you change the prompt" is worth more than one extra demo.
+- Protect the wrap-up. Ending on the RAG bridge and "read the trace before you change the prompt" is worth more than one extra demo.
 
 ### If you are ahead
 

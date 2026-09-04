@@ -7,7 +7,7 @@ WHY these five tools
 They are not a grab-bag. Each one exists to make a specific lesson concrete, and
 together they cover the space of things that go wrong:
 
-  search_docs               unstructured retrieval — and the C8 bridge
+  search_docs               unstructured retrieval — and the RAG bridge
   get_order_status          a strict format constraint (the `pattern` lesson)
   calculate                 why a language model should not do arithmetic
   check_refund_eligibility  multi-argument schemas with an enum
@@ -120,7 +120,7 @@ _QUERY_STOP = {
 
 
 def _paragraphs(text: str) -> List[str]:
-    """Split on blank lines — the cheapest sensible chunking (see C8, stage 2)."""
+    """Split on blank lines — the cheapest sensible chunking (see the RAG session's chunking stage)."""
     return [p.strip() for p in re.split(r"\n\s*\n", text) if len(p.strip()) > 60]
 
 
@@ -172,7 +172,7 @@ def search_docs(query: str, k: int = 2) -> str:
     # a single common word ("for", "plan") matches half the corpus and the tool
     # confidently returns irrelevant text — which the agent then answers from.
     # A retriever that never says "not found" is a hallucination engine with
-    # extra steps; the same lesson C8 taught with its negative eval questions.
+    # extra steps; the same lesson the RAG session taught with its negative eval questions.
     top = [row for row in scored if row[0] >= 2][: max(1, min(k, 5))]
 
     if not top:

@@ -32,7 +32,16 @@ pydantic>=2.7             # tool argument schemas (args_schema)
 langsmith>=0.2            # tracing backend; optional, two env vars to enable
 grandalf>=0.8             # optional: ASCII graph rendering for draw()
 
-# --- Retrieval, for the search_docs tool (the C8 bridge) ---
+# --- The ENTERPRISE reference (acme_support_agent/) ---------------------
+# A deployable agent: human-in-the-loop approval, durable state, guardrails,
+# an audit trail, an evaluation gate and an HTTP surface.
+langgraph-checkpoint-sqlite>=2.0   # durable checkpoints -> resumable interrupts
+pydantic-settings>=2.2            # configuration validated at boot
+fastapi>=0.110                    # the service layer
+uvicorn>=0.29                     # to run it
+httpx>=0.27                       # FastAPI TestClient
+
+# --- Retrieval, for the search_docs tool (the RAG bridge) ---
 # The tool falls back to a pure-Python keyword scorer when these are absent,
 # so the agent still has something real to retrieve from.
 # numpy>=1.24

@@ -1,6 +1,5 @@
 # Learner Handout — Agentic Systems Foundations
-
-**C9-W1-S1 · 180 minutes**
+**180 minutes**
 Keep this open beside the notebooks. Everything here is take-home.
 
 > ## The one takeaway
@@ -320,7 +319,7 @@ Three layers:
 
 ## 11. Where RAG fits
 
-`search_docs` in this package is a **real retriever** over the same Acme corpus you built a RAG pipeline on in C8. The whole of that session — loading, chunking, retrieval, ranking — collapsed into **one entry in a tool registry**.
+`search_docs` in this package is a **real retriever** over the same Acme corpus you built a RAG pipeline on in the RAG session. The whole of that session — loading, chunking, retrieval, ranking — collapsed into **one entry in a tool registry**.
 
 > **RAG is not an alternative to agents. It is a tool an agent calls.**
 

@@ -1,7 +1,6 @@
 # Agentic Systems Foundations
-
 A complete, hands-on teaching package for the 180-minute session
-**"Agentic Systems Foundations"** (C9-W1-S1). It teaches agentic systems as **a loop
+**"Agentic Systems Foundations"**. It teaches agentic systems as **a loop
 over explicit state** — STATE → THINK → ACT → OBSERVE → *update* — following a
 **WHY → WHAT → HOW** pedagogy, with the recurring question
 *"What does this step look like when it goes wrong — and where would you see it in the trace?"*
@@ -11,20 +10,26 @@ over explicit state** — STATE → THINK → ACT → OBSERVE → *update* — f
 > the trace is the only reason you can debug any of it.*
 
 This is the successor to [`building-rag-pipelines`](https://github.com/baluragala/building-rag-pipelines)
-(C8) and deliberately mirrors its structure. It also reuses its **Acme Cloud** corpus, so
+and deliberately mirrors its structure. It also reuses its **Acme Cloud** corpus, so
 `search_docs` here is a *real* retriever — which makes the bridge concrete rather than
 asserted: **RAG is not an alternative to agents; it is a tool an agent calls.**
 
-## Two tracks, one agent
+## Three tracks, one agent
 
-The same agent is built twice, on purpose:
+The same agent is built three times, each one earning its place:
 
-| | `agent_core/` — **learn the mechanism** | `agent_lc/` — **ship it** |
-|---|---|---|
-| Stack | pure Python, no framework | **LangGraph + LangChain + LangSmith** |
-| Used by | notebooks 01–07 (the 180-min session) | notebook 08 + the parallel-mapping cells |
-| API key | **not required** — deterministic mock | **requires `OPENAI_API_KEY`** |
-| Purpose | nothing is hidden; you can read every line | what you actually deploy |
+| | `agent_core/` | `agent_lc/` | `acme_support_agent/` |
+|---|---|---|---|
+| | **learn the mechanism** | **use the framework** | **deploy it** |
+| Stack | pure Python | LangGraph + LangChain | + approval, audit, guardrails, a service |
+| Used by | notebooks 01–07 | notebook 08 | **notebook 09** |
+| API key | not required | required | required |
+| Tools | read-only | read-only | **one that moves money** |
+
+The third track exists because the first two are safe to run in a classroom for
+one reason: **every tool is read-only.** The moment an agent can *do* something,
+six concerns appear that no teaching example has — and they are what
+`acme_support_agent/` is.
 
 Both hold, and holding only one is how teams get hurt:
 
@@ -54,14 +59,25 @@ agentic-systems-foundations/
 │   ├── trace.py             #   Trace/StepRecord — the debugging interface; replay; compare
 │   ├── failures.py          #   5-mode taxonomy + deterministic fault injection + diagnose()
 │   ├── agent.py             #   end-to-end Agent + task-suite runner
-│   └── acme_tools.py        #   the Acme toolbox (search_docs is the C8 bridge)
+│   └── acme_tools.py        #   the Acme toolbox (search_docs is the RAG bridge)
 ├── agent_lc/                # The PRODUCTION track — same agent, on LangGraph
 │   ├── tools_lc.py          #   the five tools with Pydantic args_schema
 │   ├── graph.py             #   the loop as a StateGraph (+ create_react_agent)
 │   ├── skills_lc.py         #   scoped subgraphs + keyword and LLM supervisors
 │   ├── tracing_lc.py        #   LangSmith setup + to_trace() so both tracks compare
 │   └── fake_model.py        #   a test double, so CI can verify graphs without a key
-├── notebooks/               # 8 Colab-compatible guided notebooks
+├── acme_support_agent/      # The ENTERPRISE reference — a deployable agent
+│   ├── settings.py          #   config validated at boot, not at 3am
+│   ├── tools.py             #   the toolset + issue_refund (idempotent, guarded)
+│   ├── graph.py             #   the graph WITH a human-in-the-loop interrupt()
+│   ├── guardrails.py        #   PII, injection, grounding, forbidden commitments
+│   ├── audit.py             #   append-only: who authorised what, and why
+│   ├── observability.py     #   structured logs, correlation ids, cost
+│   ├── evaluate.py          #   safety-gated evaluation for CI
+│   ├── runtime.py           #   SupportAgent: chat / approve / history
+│   ├── service.py           #   FastAPI — where the approval round trip is real
+│   └── cli.py               #   drive it from a terminal
+├── notebooks/               # 9 Colab-compatible guided notebooks
 │   ├── 01_agentic_foundations.ipynb    (20 min · conceptual + guided analysis)
 │   ├── 02_agent_loop_and_state.ipynb   (30 min · demo + guided coding)
 │   ├── 03_tools_and_schemas.ipynb      (40 min · guided coding)
@@ -69,9 +85,10 @@ agentic-systems-foundations/
 │   ├── 05_control_and_tracing.ipynb    (25 min · demonstration)
 │   ├── 06_failure_modes.ipynb          (20 min · guided analysis)
 │   ├── 07_wrap_up_end_to_end.ipynb     (5 min  · Q&A)
-│   └── 08_langgraph_production_track.ipynb  (APPENDIX · outside the 180 min)
+│   ├── 08_langgraph_production_track.ipynb  (APPENDIX · the framework)
+│   └── 09_enterprise_reference.ipynb        (APPENDIX · the deployable system)
 ├── data/
-│   ├── corpus/              # Acme Cloud docs (from C8) + the refund policy
+│   ├── corpus/              # Acme Cloud docs (from the RAG session) + the refund policy
 │   ├── acme/orders.json     # 7 order records backing the structured tools
 │   └── tasks/agent_tasks.jsonl  # 15 tasks incl. 6 NEGATIVE tests (refusing = passing)
 ├── slides/agentic_systems_foundations.html   # self-contained reveal.js deck, SVG loop
@@ -81,7 +98,8 @@ agentic-systems-foundations/
 │   ├── learner_handout.md       # take-home notes, cheat sheets, glossary
 │   ├── exercises.md             # graded practice per section + capstone
 │   └── solutions/solutions.md   # worked solutions
-├── scripts/  setup.sh · setup.ps1 · smoke_test.py · check_langgraph.py · check_solutions.py
+├── scripts/  setup.sh · setup.ps1 · smoke_test.py · check_langgraph.py
+│            check_enterprise.py · check_solutions.py
 ├── requirements.txt  ·  .env.example  ·  .gitignore
 └── docs/superpowers/specs/      # design spec for this package
 ```
@@ -91,7 +109,7 @@ agentic-systems-foundations/
 ## No API key? The whole session still runs.
 
 This is the single most important operational fact, and it needed a different solution
-from C8's.
+from the RAG session's.
 
 In the RAG package the offline mock only had to emit **text**, because a pipeline is a
 straight line and text was the last step. **An agent loops on a decision.** A text-only
@@ -204,7 +222,7 @@ jupyter lab
 
 LangChain appears throughout as a **parallel mapping** — `Tool.to_langchain()`,
 `AgentExecutor` compared to `run_loop`, `max_iterations` compared to
-`TerminationPolicy` — never as the primary path. The argument is C8's: *the framework
+`TerminationPolicy` — never as the primary path. The argument is the RAG session's: *the framework
 abstracts the mechanics, not the design decisions.* `max_iterations=10` is still a number
 you have to choose.
 
@@ -311,6 +329,66 @@ write — and are the conditions teams most often skip, precisely because the ba
 
 ---
 
+## The enterprise reference
+
+`acme_support_agent/` is the end-to-end system — the one to copy from.
+
+```python
+from acme_support_agent import SupportAgent
+
+agent = SupportAgent()
+reply = agent.chat("Please refund ACME-1046, I changed my mind.", thread_id="t1")
+
+if reply.needs_approval:                     # the graph SUSPENDED
+    print(reply.approval_request.summary())  # a human reads the evidence
+    reply = agent.approve("t1", approved=True, approver="alice@acme.io")
+
+print(reply.answer)
+print(agent.history("t1"))                   # who authorised what, and why
+```
+
+### The six things the teaching tracks omit
+
+1. **Human-in-the-loop approval.** `interrupt()` suspends the graph between the
+   model's decision and the side effect. Not a prompt asking nicely — the refund
+   *cannot* happen until a named human resumes the thread.
+2. **Durable state.** A checkpointer means approval can arrive hours later, from
+   a different process, after a deploy.
+3. **Guardrails in code.** *A prompt is a request; a guardrail is a control.*
+   Block what is objective (leaked card numbers, false claims that a refund was
+   issued); flag what is heuristic (grounding, injection) — because a guardrail
+   that cries wolf gets switched off.
+4. **An audit trail.** A trace says *why the agent did something*; an audit says
+   *who authorised it*. Different audience, different retention, not substitutes.
+5. **An evaluation gate.** Safety cases gated at **100%**, separate from
+   capability. One safety regression fails the build even if capability improved
+   — the two are not commensurable.
+6. **A service.** The approval round trip only becomes real when the two halves
+   are separate HTTP requests.
+
+### The design decision under all of it
+
+```python
+check_refund_eligibility(order_id, reason)   # DECIDE — read-only
+issue_refund(order_id, amount_usd, reason)   # ACT    — moves money
+```
+
+Two tools, so there is somewhere to stand between them. Fuse them into one
+`process_refund` and there is nowhere to put the gate — the money has moved by
+the time you could interrupt.
+
+> **Tool design determines where you can put your controls.**
+
+### Run it
+
+```bash
+python -m acme_support_agent.cli "Refund ACME-1046, I changed my mind."
+python -m acme_support_agent.cli --eval
+uvicorn acme_support_agent.service:app --reload
+```
+
+---
+
 ## Verification
 
 Nothing here is asserted without being run:
@@ -318,11 +396,13 @@ Nothing here is asserted without being run:
 ```bash
 python scripts/smoke_test.py       # every agent_core module, under the offline mock
 python scripts/check_langgraph.py  # every agent_lc graph, via a keyless test double
+python scripts/check_enterprise.py # guardrails, approval gate, interrupt/resume,
+                                   #   idempotency, audit, eval gate, HTTP service
 python scripts/check_solutions.py  # every runnable claim in solutions.md
 ```
 
-All 8 notebooks execute top-to-bottom **with no API key** (LangGraph cells that need a
-real model skip cleanly and say so), and all 15 tasks in the suite pass under the mock.
+All 9 notebooks execute top-to-bottom **with no API key** (cells needing a real model
+skip cleanly and say so), and all 15 tasks in the suite pass under the mock.
 
 > **One honest gap:** the `ChatOpenAI` path in `agent_lc` has not been executed against
 > the live API — there was no key available when this was built. The graph wiring,
