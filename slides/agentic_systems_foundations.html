@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agentic Systems Foundations</title>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.6.1/reveal.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.6.1/theme/black.min.css" id="theme">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+
+  <style>
+    :root{
+      --goal:#8b93a7; --state:#f7d51d; --term:#ff6f91; --think:#3fb6ff;
+      --act:#57d38c; --obs:#c78bff; --answer:#ffb648;
+    }
+    .reveal { font-size: 30px; }
+    .reveal h1 { font-size: 1.6em; }
+    .reveal h2 { font-size: 1.2em; color:#7fd1ff; text-transform:none; letter-spacing:0; }
+    .reveal h3 { color:#ffd166; text-transform:none; font-size:0.95em; }
+    .reveal section { text-align:left; }
+    .reveal .center { text-align:center; }
+    .reveal ul { display:block; }
+    .reveal li { margin: 5px 0; line-height:1.25; }
+    .reveal small { color:#aab3c5; }
+    .reveal pre { width:100%; box-shadow:none; font-size:0.48em; }
+    .reveal pre code { max-height:500px; padding:14px 16px; border-radius:8px; }
+    .reveal code.inline { background:#222a3f; padding:1px 6px; border-radius:4px;
+      color:#ffd166; font-size:0.85em; }
+    .reveal table { font-size:0.68em; }
+    .reveal table th { color:#ffd166; }
+
+    .badge { display:inline-block; padding:3px 12px; border-radius:20px; font-size:0.48em;
+      font-weight:700; vertical-align:middle; margin-left:8px; }
+    .badge.why { background:#ff6f91; color:#1a0510; }
+    .badge.what{ background:#57d38c; color:#04180d; }
+    .badge.how { background:#3fb6ff; color:#031424; }
+    .min { display:inline-block; background:#f7d51d; color:#1a1500; font-weight:800;
+      padding:4px 14px; border-radius:8px; font-size:0.55em; vertical-align:middle; }
+
+    .why-box { border-left:6px solid #ff6f91; background:rgba(255,111,145,0.10);
+      padding:10px 16px; border-radius:6px; margin:10px 0; }
+    .key { border-left:6px solid #f7d51d; background:rgba(247,213,29,0.10);
+      padding:10px 16px; border-radius:6px; margin:10px 0; font-size:0.92em;}
+    .warn { border-left:6px solid #ff6f91; background:rgba(255,111,145,0.08);
+      padding:10px 16px; border-radius:6px; margin:10px 0; font-size:0.9em;}
+    .predict { border:2px dashed #f7d51d; border-radius:8px; padding:8px 14px; margin:10px 0;
+      background:rgba(247,213,29,0.06); font-size:0.82em;}
+    .predict b{ color:#f7d51d;}
+    .nb { display:inline-block; background:#123; border:1px solid #3fb6ff; color:#7fd1ff;
+      padding:4px 12px; border-radius:6px; font-size:0.6em; margin:4px 6px 4px 0;
+      font-family:monospace;}
+    .two { display:grid; grid-template-columns:1fr 1fr; gap:26px; }
+    .two h3 { margin-top:0; }
+    .do  { color:#8affc1; }
+    .dont{ color:#ff9db0; }
+    .quiet { color:#ff9db0; font-weight:700; }
+    .loud  { color:#8affc1; font-weight:700; }
+    .stageflag{ font-size:0.5em; color:#8b93a7; letter-spacing:2px; text-transform:uppercase;
+      text-align:center; margin-top:2px;}
+    .reveal .footer { position:fixed; bottom:8px; left:14px; font-size:13px; color:#5b6478; z-index:30; }
+    .reveal .slide-number { background:transparent; color:#5b6478; font-size:14px; }
+
+    /* loop diagram */
+    .loop { width:100%; max-width:900px; height:auto; display:block; margin:6px auto; }
+    .loop .box rect { fill:#1a2236; stroke:#39445f; stroke-width:2; }
+    .loop .box text { fill:#9aa4bd; font-weight:700; font-size:17px;
+      font-family:Helvetica,Arial,sans-serif; }
+    .loop .box.active rect { stroke-width:3.5; }
+    .loop .box.active text { fill:#0b1020; }
+    .loop .box.goal.active   rect{ fill:var(--goal);   stroke:#d7dbe4;}
+    .loop .box.state.active  rect{ fill:var(--state);  stroke:#fff0a6;}
+    .loop .box.term.active   rect{ fill:var(--term);   stroke:#ffc6d3;}
+    .loop .box.think.active  rect{ fill:var(--think);  stroke:#bfe6ff;}
+    .loop .box.act.active    rect{ fill:var(--act);    stroke:#c2f4d6;}
+    .loop .box.obs.active    rect{ fill:var(--obs);    stroke:#e6ccff;}
+    .loop .box.answer.active rect{ fill:var(--answer); stroke:#ffe2ac;}
+    .loop .arrow { stroke:#5b6478; stroke-width:2.5; }
+    .loop .feedback { stroke:#f7d51d; stroke-width:2.5; stroke-dasharray:7 5; }
+    .loop .fblabel { fill:#f7d51d; font-size:14px; font-family:Helvetica,Arial,sans-serif; }
+  </style>
+</head>
+<body>
+<div class="reveal">
+  <div class="footer">Agentic Systems Foundations &middot; C9-W1-S1</div>
+  <div class="slides">
+
+  <section>
+    <section class="center">
+      <h1>Agentic Systems Foundations</h1>
+      <p><small>C9-W1-S1 &middot; 180 minutes &middot; hands-on</small></p>
+      <svg class="loop" viewBox="0 0 880 205" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ah" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#5b6478"/></marker><marker id="ahl" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#f7d51d"/></marker></defs>
+<path class="feedback" d="M775 60 L775 22 L180 22 L180 56" fill="none" marker-end="url(#ahl)"/><text class="fblabel" x="478" y="16" text-anchor="middle">update state &#8212; this is what makes it an agent</text>
+<g class="box goal"><rect x="15" y="60" width="80" height="48" rx="8"/><text x="55" y="90" text-anchor="middle">GOAL</text></g>
+<line class="arrow" x1="99" y1="84" x2="119" y2="84" marker-end="url(#ah)"/>
+<g class="box state active"><rect x="125" y="60" width="110" height="48" rx="8"/><text x="180" y="90" text-anchor="middle">STATE</text></g>
+<line class="arrow" x1="239" y1="84" x2="269" y2="84" marker-end="url(#ah)"/>
+<g class="box term"><rect x="275" y="60" width="120" height="48" rx="8"/><text x="335" y="90" text-anchor="middle">terminate?</text></g>
+<line class="arrow" x1="399" y1="84" x2="429" y2="84" marker-end="url(#ah)"/>
+<g class="box think active"><rect x="435" y="60" width="110" height="48" rx="8"/><text x="490" y="90" text-anchor="middle">THINK</text></g>
+<line class="arrow" x1="549" y1="84" x2="579" y2="84" marker-end="url(#ah)"/>
+<g class="box act active"><rect x="585" y="60" width="100" height="48" rx="8"/><text x="635" y="90" text-anchor="middle">ACT</text></g>
+<line class="arrow" x1="689" y1="84" x2="709" y2="84" marker-end="url(#ah)"/>
+<g class="box obs active"><rect x="715" y="60" width="120" height="48" rx="8"/><text x="775" y="90" text-anchor="middle">OBSERVE</text></g>
+<line class="arrow" x1="335" y1="110" x2="335" y2="141" marker-end="url(#ah)"/><g class="box answer"><rect x="275" y="145" width="120" height="42" rx="8"/><text x="335" y="172" text-anchor="middle">ANSWER</text></g>
+</svg>
+      <div class="key" style="text-align:left">
+        <b>The one takeaway:</b> an agent is <b>not a smarter model</b>. It is a
+        <b>loop over explicit state</b>. Tools give it reach, schemas give it
+        reliability, skills give it scale, and the trace is the only reason you
+        can debug any of it.
+      </div>
+      <aside class='notes'>Say the takeaway now, and say it again at 90 minutes and at the wrap-up. Three times. Everything else in the session is scaffolding around it. Point at the yellow dashed arrow: that feedback line is the entire difference between an LLM and an agent.</aside>
+    </section>
+
+    <section>
+      <h2>The recurring question</h2>
+      <div class="why-box">
+        <b>&ldquo;What does this step look like when it goes wrong &mdash; and
+        where would you see it in the trace?&rdquo;</b>
+      </div>
+      <p>We ask it at <b>every</b> stage, not just at the end.</p>
+      <ul>
+        <li>Last session asked <em>&ldquo;what if this step is poorly designed?&rdquo;</em></li>
+        <li>Agents fail <b>across time</b>, with nothing thrown &mdash; so the
+            question has to be about <b>evidence</b>, not exceptions</li>
+      </ul>
+      <aside class='notes'>This is the C9 analogue of C8's recurring question. Threading failure analysis through every section rather than saving it for the end is deliberate: by notebook 06 the room already knows what to look for.</aside>
+    </section>
+
+    <section>
+      <h2>Agenda &middot; 180 minutes</h2>
+      <table>
+        <tr><th>#</th><th>Section</th><th>Mode</th><th>Min</th></tr>
+        <tr><td>01</td><td>What makes a system agentic</td><td>Conceptual + analysis</td><td>20</td></tr>
+        <tr><td>02</td><td>The agent loop and state</td><td>Demo + guided coding</td><td>30</td></tr>
+        <tr><td>03</td><td>Tools and schemas</td><td>Guided coding</td><td>40</td></tr>
+        <tr><td>04</td><td>Agent skills</td><td>Demo + guided practice</td><td>40</td></tr>
+        <tr><td>05</td><td>Control and tracing</td><td>Demonstration</td><td>25</td></tr>
+        <tr><td>06</td><td>Failure modes</td><td>Guided analysis</td><td>20</td></tr>
+        <tr><td>07</td><td>Wrap-up</td><td>Q&amp;A</td><td>5</td></tr>
+      </table>
+      <p><span class="nb">7 notebooks</span><span class="nb">agent_core/</span>
+         <span class="nb">runs with NO API key</span></p>
+      <aside class='notes'>Flag the keyless point early and loudly. Nobody should spend the first twenty minutes hunting for an API key. The offline mock DECIDES TOOL CALLS, so the entire loop runs offline and deterministically.</aside>
+    </section>
+  </section>
+
+  <!-- ============ 01 &middot; What Makes a System Agentic? ============ -->
+  <section>
+    <section class="center">
+      <h1>01 &middot; What Makes a System Agentic?</h1>
+      <p><span class="min">20 min</span></p>
+      <svg class="loop" viewBox="0 0 880 205" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ah" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#5b6478"/></marker><marker id="ahl" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#f7d51d"/></marker></defs>
+<path class="feedback" d="M775 60 L775 22 L180 22 L180 56" fill="none" marker-end="url(#ahl)"/><text class="fblabel" x="478" y="16" text-anchor="middle">update state &#8212; this is what makes it an agent</text>
+<g class="box goal"><rect x="15" y="60" width="80" height="48" rx="8"/><text x="55" y="90" text-anchor="middle">GOAL</text></g>
+<line class="arrow" x1="99" y1="84" x2="119" y2="84" marker-end="url(#ah)"/>
+<g class="box state"><rect x="125" y="60" width="110" height="48" rx="8"/><text x="180" y="90" text-anchor="middle">STATE</text></g>
+<line class="arrow" x1="239" y1="84" x2="269" y2="84" marker-end="url(#ah)"/>
+<g class="box term"><rect x="275" y="60" width="120" height="48" rx="8"/><text x="335" y="90" text-anchor="middle">terminate?</text></g>
+<line class="arrow" x1="399" y1="84" x2="429" y2="84" marker-end="url(#ah)"/>
+<g class="box think"><rect x="435" y="60" width="110" height="48" rx="8"/><text x="490" y="90" text-anchor="middle">THINK</text></g>
+<line class="arrow" x1="549" y1="84" x2="579" y2="84" marker-end="url(#ah)"/>
+<g class="box act"><rect x="585" y="60" width="100" height="48" rx="8"/><text x="635" y="90" text-anchor="middle">ACT</text></g>
+<line class="arrow" x1="689" y1="84" x2="709" y2="84" marker-end="url(#ah)"/>
+<g class="box obs"><rect x="715" y="60" width="120" height="48" rx="8"/><text x="775" y="90" text-anchor="middle">OBSERVE</text></g>
+<line class="arrow" x1="335" y1="110" x2="335" y2="141" marker-end="url(#ah)"/><g class="box answer"><rect x="275" y="145" width="120" height="42" rx="8"/><text x="335" y="172" text-anchor="middle">ANSWER</text></g>
+</svg>
+    </section>
+
+    <section>
+      <h2>Pipeline vs agent <span class="badge why">WHY</span></h2>
+      <div class="two">
+        <div>
+          <h3>Pipeline (C8 RAG)</h3>
+          <pre><code>question
+  &rarr; retrieve
+  &rarr; augment
+  &rarr; generate
+  &rarr; answer</code></pre>
+          <p><small>Fixed shape. <b>You</b> decided the order when you wrote it.</small></p>
+        </div>
+        <div>
+          <h3>Agent</h3>
+          <pre><code>goal
+  &rarr; [think &rarr; act &rarr; observe]
+  &rarr; [think &rarr; act &rarr; observe]
+  &rarr; &hellip; &rarr; answer</code></pre>
+          <p><small>Cycle whose <b>length is decided at runtime by the model</b>.</small></p>
+        </div>
+      </div>
+      <div class="key">The defining difference is <b>who decides the control flow</b>.</div>
+      <aside class='notes'>Ask the room: who has shipped something they called an agent? Then ask whether the model chose the steps or they did. That question usually settles it, kindly.</aside>
+    </section>
+
+    <section>
+      <h2>Three properties &mdash; you need all three <span class="badge what">WHAT</span></h2>
+      <table>
+        <tr><th>System</th><th>Goal</th><th>State</th><th>Iterative</th><th>Verdict</th></tr>
+        <tr><td>Single LLM call</td><td>&#9989;</td><td>&#10060;</td><td>&#10060;</td><td>Not agentic</td></tr>
+        <tr><td>C8 RAG pipeline</td><td>&#9989;</td><td>&#10060;</td><td>&#10060;</td><td>Not agentic &mdash; and that is fine</td></tr>
+        <tr><td><code class="inline">for</code> loop &times;5</td><td>&#10060;</td><td>&#10060;</td><td>&#9888;</td><td>Repeats; does not decide</td></tr>
+        <tr><td>Chatbot with history</td><td>&#9888;</td><td>&#9989;</td><td>&#10060;</td><td>Remembers, one shot per turn</td></tr>
+        <tr><td>LLM + tools + loop + state</td><td>&#9989;</td><td>&#9989;</td><td>&#9989;</td><td><b>Agentic</b></td></tr>
+      </table>
+      <aside class='notes'>The RAG row matters most. Do not let anyone leave thinking pipelines are the inferior thing you graduate from. They are the right answer whenever you can draw the flowchart.</aside>
+    </section>
+
+    <section>
+      <h2>The honest trade <span class="badge what">WHAT</span></h2>
+      <table>
+        <tr><th></th><th>Pipeline</th><th>Agent</th></tr>
+        <tr><td>Latency</td><td>fixed, ~1 call</td><td>variable, 1&ndash;N calls</td></tr>
+        <tr><td>Cost</td><td>predictable</td><td><b>grows super-linearly</b></td></tr>
+        <tr><td>Testing</td><td>assert on output</td><td>assert on a <b>trajectory</b></td></tr>
+        <tr><td>Failure</td><td>loud, known stage</td><td>often <b>silent</b>, across steps</td></tr>
+        <tr><td>Unexpected input</td><td>no</td><td><b>yes</b> &mdash; the whole reason to pay</td></tr>
+      </table>
+      <div class="warn"><b>If you can draw the flowchart, write the flowchart.</b>
+        It will be faster, cheaper, and you will sleep.</div>
+      <aside class='notes'>Cost grows super-linearly because every step re-sends the whole transcript. Sum of a growing series, closer to quadratic than linear. We prove it with real numbers in notebook 02 - promise them that now.</aside>
+    </section>
+
+  </section>
+
+  <!-- ============ 02 &middot; The Agent Loop and State ============ -->
+  <section>
+    <section class="center">
+      <h1>02 &middot; The Agent Loop and State</h1>
+      <p><span class="min">30 min</span></p>
+      <svg class="loop" viewBox="0 0 880 205" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ah" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#5b6478"/></marker><marker id="ahl" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#f7d51d"/></marker></defs>
+<path class="feedback" d="M775 60 L775 22 L180 22 L180 56" fill="none" marker-end="url(#ahl)"/><text class="fblabel" x="478" y="16" text-anchor="middle">update state &#8212; this is what makes it an agent</text>
+<g class="box goal"><rect x="15" y="60" width="80" height="48" rx="8"/><text x="55" y="90" text-anchor="middle">GOAL</text></g>
+<line class="arrow" x1="99" y1="84" x2="119" y2="84" marker-end="url(#ah)"/>
+<g class="box state"><rect x="125" y="60" width="110" height="48" rx="8"/><text x="180" y="90" text-anchor="middle">STATE</text></g>
+<line class="arrow" x1="239" y1="84" x2="269" y2="84" marker-end="url(#ah)"/>
+<g class="box term"><rect x="275" y="60" width="120" height="48" rx="8"/><text x="335" y="90" text-anchor="middle">terminate?</text></g>
+<line class="arrow" x1="399" y1="84" x2="429" y2="84" marker-end="url(#ah)"/>
+<g class="box think"><rect x="435" y="60" width="110" height="48" rx="8"/><text x="490" y="90" text-anchor="middle">THINK</text></g>
+<line class="arrow" x1="549" y1="84" x2="579" y2="84" marker-end="url(#ah)"/>
+<g class="box act"><rect x="585" y="60" width="100" height="48" rx="8"/><text x="635" y="90" text-anchor="middle">ACT</text></g>
+<line class="arrow" x1="689" y1="84" x2="709" y2="84" marker-end="url(#ah)"/>
+<g class="box obs"><rect x="715" y="60" width="120" height="48" rx="8"/><text x="775" y="90" text-anchor="middle">OBSERVE</text></g>
+<line class="arrow" x1="335" y1="110" x2="335" y2="141" marker-end="url(#ah)"/><g class="box answer"><rect x="275" y="145" width="120" height="42" rx="8"/><text x="335" y="172" text-anchor="middle">ANSWER</text></g>
+</svg>
+    </section>
+
+    <section>
+      <h2>State is the core of agent intelligence <span class="badge why">WHY</span></h2>
+      <svg class="loop" viewBox="0 0 880 205" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ah" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#5b6478"/></marker><marker id="ahl" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#f7d51d"/></marker></defs>
+<path class="feedback" d="M775 60 L775 22 L180 22 L180 56" fill="none" marker-end="url(#ahl)"/><text class="fblabel" x="478" y="16" text-anchor="middle">update state &#8212; this is what makes it an agent</text>
+<g class="box goal"><rect x="15" y="60" width="80" height="48" rx="8"/><text x="55" y="90" text-anchor="middle">GOAL</text></g>
+<line class="arrow" x1="99" y1="84" x2="119" y2="84" marker-end="url(#ah)"/>
+<g class="box state active"><rect x="125" y="60" width="110" height="48" rx="8"/><text x="180" y="90" text-anchor="middle">STATE</text></g>
+<line class="arrow" x1="239" y1="84" x2="269" y2="84" marker-end="url(#ah)"/>
+<g class="box term"><rect x="275" y="60" width="120" height="48" rx="8"/><text x="335" y="90" text-anchor="middle">terminate?</text></g>
+<line class="arrow" x1="399" y1="84" x2="429" y2="84" marker-end="url(#ah)"/>
+<g class="box think"><rect x="435" y="60" width="110" height="48" rx="8"/><text x="490" y="90" text-anchor="middle">THINK</text></g>
+<line class="arrow" x1="549" y1="84" x2="579" y2="84" marker-end="url(#ah)"/>
+<g class="box act"><rect x="585" y="60" width="100" height="48" rx="8"/><text x="635" y="90" text-anchor="middle">ACT</text></g>
+<line class="arrow" x1="689" y1="84" x2="709" y2="84" marker-end="url(#ah)"/>
+<g class="box obs"><rect x="715" y="60" width="120" height="48" rx="8"/><text x="775" y="90" text-anchor="middle">OBSERVE</text></g>
+<line class="arrow" x1="335" y1="110" x2="335" y2="141" marker-end="url(#ah)"/><g class="box answer"><rect x="275" y="145" width="120" height="42" rx="8"/><text x="335" y="172" text-anchor="middle">ANSWER</text></g>
+</svg>
+<p class="stageflag">the piece everything else writes to</p>
+      <div class="key">
+        The model is <b>stateless</b>. Every API call is independent.<br>
+        When your agent &ldquo;learns&rdquo; that ACME-1042 shipped in July,
+        <b>nothing inside the model changed</b> &mdash; you appended that fact to
+        the next call's input.
+      </div>
+      <p>So an agent's intelligence over time <b>is</b> the quality of what you
+         write into its state. Nothing else.</p>
+      <aside class='notes'>This is the section the agenda calls the core of agent intelligence, and it means it literally. Do not rush it - 30 minutes, and the payoff cell is the stateless comparison.</aside>
+    </section>
+
+    <section>
+      <h2>The whole idea, in six lines <span class="badge how">HOW</span></h2>
+      <pre><code class="language-python">while not done:
+    decision = llm.decide(state.messages, tools)     # THINK
+    if decision.is_final:
+        break                                        # terminate
+    for call in decision.tool_calls:
+        obs = tools.dispatch(call.name, call.args)   # ACT
+        state.add_message("tool", str(obs.result))   # OBSERVE + UPDATE</code></pre>
+      <p>Everything else &mdash; schemas, skills, control, tracing &mdash;
+         exists to keep <b>those six lines</b> honest.</p>
+      <p><span class="nb">notebook 02: write it inline first</span></p>
+      <aside class='notes'>Have them type this, not read it. Thirty lines inline, no package, no framework. Then show that agent_core/loop.py is the same thing with the sharp edges filed off.</aside>
+    </section>
+
+    <section>
+      <h2>Two views of state, and why both <span class="badge what">WHAT</span></h2>
+      <table>
+        <tr><th>Field</th><th>Read by</th><th>Why separate</th></tr>
+        <tr><td><code class="inline">goal</code></td><td>you</td><td>immutable; the agent may not rewrite the task</td></tr>
+        <tr><td><code class="inline">messages</code></td><td><b>the model</b></td><td>the transcript sent every call</td></tr>
+        <tr><td><code class="inline">observations</code></td><td><b>your code</b></td><td>structured; answers &ldquo;is it stuck?&rdquo; without parsing prose</td></tr>
+        <tr><td><code class="inline">budget</code></td><td>control layer</td><td>how much more it may do</td></tr>
+      </table>
+      <div class="warn">Beginners collapse <code class="inline">messages</code> and
+        <code class="inline">observations</code> into one list &mdash; then cannot
+        answer <em>&ldquo;has this agent made progress?&rdquo;</em> without re-reading English.</div>
+      <aside class='notes'>repeated_calls(), consecutive_errors() and approx_tokens() are all trivial against observations and painful against messages. That is the whole argument for keeping them apart.</aside>
+    </section>
+
+    <section>
+      <h2 class="center">The cell that makes the point</h2>
+      <div class="predict"><b>&#9995; Predict:</b> same agent, same goal, but the
+        OBSERVE step is disabled &mdash; the tool runs, the result is never written
+        back. <b>What happens?</b></div>
+      <pre><code class="language-text">run        status     steps calls  err  tools
+with state    done         2     1   0%  get_order_status
+WITHOUT state exhausted    3     3   0%  get_order_status&rarr;get_order_status&rarr;get_order_status
+
+WITHOUT state -> repetition: identical call repeated 3x</code></pre>
+      <div class="key">It is not broken and not stupid. Every step it sees the
+        <b>same input</b>, so it makes the <b>same decision</b>.</div>
+      <aside class='notes'>Take the prediction out loud before running. Most rooms guess 'it crashes' or 'it answers wrong'. Neither. It repeats, rationally, forever. Then say the line: the while loop is not what makes an agent - the write-back is.</aside>
+    </section>
+
+    <section>
+      <h2>The cost curve nobody warns you about <span class="badge what">WHAT</span></h2>
+      <pre><code class="language-text">step   context tokens in
+1                  666
+2                  729
+3                  773
+
+Total SENT across run: ~2168
+A single call would have been: ~773</code></pre>
+      <p>Every step <b>re-sends the entire transcript</b>.</p>
+      <div class="warn">A 10-step run does not cost 10&times; a 1-step run.
+        Step budgets are a <b>cost control</b>, not just a safety rail.</div>
+      <aside class='notes'>This is where 'just let it keep trying' gets expensive. Connect forward to notebook 05: the budget is not paranoia, it is arithmetic.</aside>
+    </section>
+
+  </section>
+
+  <!-- ============ 03 &middot; Tools and Schemas ============ -->
+  <section>
+    <section class="center">
+      <h1>03 &middot; Tools and Schemas</h1>
+      <p><span class="min">40 min</span></p>
+      <svg class="loop" viewBox="0 0 880 205" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ah" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#5b6478"/></marker><marker id="ahl" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#f7d51d"/></marker></defs>
+<path class="feedback" d="M775 60 L775 22 L180 22 L180 56" fill="none" marker-end="url(#ahl)"/><text class="fblabel" x="478" y="16" text-anchor="middle">update state &#8212; this is what makes it an agent</text>
+<g class="box goal"><rect x="15" y="60" width="80" height="48" rx="8"/><text x="55" y="90" text-anchor="middle">GOAL</text></g>
+<line class="arrow" x1="99" y1="84" x2="119" y2="84" marker-end="url(#ah)"/>
+<g class="box state"><rect x="125" y="60" width="110" height="48" rx="8"/><text x="180" y="90" text-anchor="middle">STATE</text></g>
+<line class="arrow" x1="239" y1="84" x2="269" y2="84" marker-end="url(#ah)"/>
+<g class="box term"><rect x="275" y="60" width="120" height="48" rx="8"/><text x="335" y="90" text-anchor="middle">terminate?</text></g>
+<line class="arrow" x1="399" y1="84" x2="429" y2="84" marker-end="url(#ah)"/>
+<g class="box think"><rect x="435" y="60" width="110" height="48" rx="8"/><text x="490" y="90" text-anchor="middle">THINK</text></g>
+<line class="arrow" x1="549" y1="84" x2="579" y2="84" marker-end="url(#ah)"/>
+<g class="box act"><rect x="585" y="60" width="100" height="48" rx="8"/><text x="635" y="90" text-anchor="middle">ACT</text></g>
+<line class="arrow" x1="689" y1="84" x2="709" y2="84" marker-end="url(#ah)"/>
+<g class="box obs"><rect x="715" y="60" width="120" height="48" rx="8"/><text x="775" y="90" text-anchor="middle">OBSERVE</text></g>
+<line class="arrow" x1="335" y1="110" x2="335" y2="141" marker-end="url(#ah)"/><g class="box answer"><rect x="275" y="145" width="120" height="42" rx="8"/><text x="335" y="172" text-anchor="middle">ANSWER</text></g>
+</svg>
+    </section>
+
+    <section>
+      <h2>The schema is where you decide trust <span class="badge why">WHY</span></h2>
+      <svg class="loop" viewBox="0 0 880 205" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ah" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#5b6478"/></marker><marker id="ahl" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#f7d51d"/></marker></defs>
+<path class="feedback" d="M775 60 L775 22 L180 22 L180 56" fill="none" marker-end="url(#ahl)"/><text class="fblabel" x="478" y="16" text-anchor="middle">update state &#8212; this is what makes it an agent</text>
+<g class="box goal"><rect x="15" y="60" width="80" height="48" rx="8"/><text x="55" y="90" text-anchor="middle">GOAL</text></g>
+<line class="arrow" x1="99" y1="84" x2="119" y2="84" marker-end="url(#ah)"/>
+<g class="box state"><rect x="125" y="60" width="110" height="48" rx="8"/><text x="180" y="90" text-anchor="middle">STATE</text></g>
+<line class="arrow" x1="239" y1="84" x2="269" y2="84" marker-end="url(#ah)"/>
+<g class="box term"><rect x="275" y="60" width="120" height="48" rx="8"/><text x="335" y="90" text-anchor="middle">terminate?</text></g>
+<line class="arrow" x1="399" y1="84" x2="429" y2="84" marker-end="url(#ah)"/>
+<g class="box think"><rect x="435" y="60" width="110" height="48" rx="8"/><text x="490" y="90" text-anchor="middle">THINK</text></g>
+<line class="arrow" x1="549" y1="84" x2="579" y2="84" marker-end="url(#ah)"/>
+<g class="box act active"><rect x="585" y="60" width="100" height="48" rx="8"/><text x="635" y="90" text-anchor="middle">ACT</text></g>
+<line class="arrow" x1="689" y1="84" x2="709" y2="84" marker-end="url(#ah)"/>
+<g class="box obs"><rect x="715" y="60" width="120" height="48" rx="8"/><text x="775" y="90" text-anchor="middle">OBSERVE</text></g>
+<line class="arrow" x1="335" y1="110" x2="335" y2="141" marker-end="url(#ah)"/><g class="box answer"><rect x="275" y="145" width="120" height="42" rx="8"/><text x="335" y="172" text-anchor="middle">ANSWER</text></g>
+</svg>
+<p class="stageflag">the ACT step &mdash; the loop touches the real world</p>
+      <p>One tool, <code class="inline">get_order_status(order_id)</code>.
+         One model output: <code class="inline">{"order_id": 1042}</code></p>
+      <table>
+        <tr><th>Schema</th><th>What happens</th></tr>
+        <tr><td>loose / none</td><td><code class="inline">KeyError</code> deep in your DB code &mdash; blaming the wrong layer</td></tr>
+        <tr><td><b>strict</b></td><td>rejected before your function runs:<br>
+            <code class="inline">order_id: 1042 does not match ^ACME-\d{4}$</code></td></tr>
+      </table>
+      <div class="key">Same model, same output. The difference is <b>entirely</b> your schema.</div>
+      <aside class='notes'>Labour this. Schema design gets treated as paperwork and it is the single highest-leverage thing in the whole tool layer.</aside>
+    </section>
+
+    <section>
+      <h2>Anatomy of a good tool <span class="badge what">WHAT</span></h2>
+      <ol>
+        <li><b>Description</b> &mdash; says <em>when</em> to use it, not just what it does</li>
+        <li><b>Parameter descriptions</b> with formats <b>and an example</b></li>
+        <li><b>Constraints</b> &mdash; <code class="inline">enum</code> and
+            <code class="inline">pattern</code></li>
+        <li><b>Return value</b> &mdash; prose <em>written for a model to read</em>, not a status code</li>
+      </ol>
+      <div class="key"><code class="inline">Literal[...]</code> &rarr;
+        <code class="inline">enum</code> turns <em>&ldquo;guess a valid value&rdquo;</em>
+        into <em>&ldquo;pick from this list&rdquo;</em>. Highest-value line in any schema.</div>
+      <div class="warn"><b>Tools must never raise.</b> A tool that raises kills the
+        loop and takes the trace with it. A tool that <em>returns</em> a readable
+        error becomes a self-repair on the next step.</div>
+      <aside class='notes'>Most 'the model picked the wrong tool' bugs are really 'two descriptions never said how they differ'. And the return value is prompt text you are writing on the model's behalf - every ambiguity is a chance to hallucinate.</aside>
+    </section>
+
+    <section>
+      <h2>Validate <em>and</em> coerce <span class="badge how">HOW</span></h2>
+      <pre><code class="language-text">[REJECTED] bare number as ID     sent: {'order_id': 1042}
+           why : order_id: expected string ... does not match ^ACME-\d{4}$
+[REJECTED] invented reason       why : 'vibes' is not one of ['billing_error', ...]
+[REJECTED] invented parameter    why : urgent: unknown parameter
+[OK      ] string "3" for int    FIXED: ['k: "3" -> 3 (integer)']</code></pre>
+      <div class="key"><code class="inline">"3"</code> is a <b>model quirk</b>, not a
+        user error. Rejecting it burns a whole agent step. Coerce it &mdash;
+        and <b>record that you did</b>.</div>
+      <p><small>Errors are written <b>for the model to read</b>. That is what makes a
+         retry loop converge instead of spin.</small></p>
+      <aside class='notes'>Contrast the two error styles out loud: 'order_id must match ^ACME-####' versus 'ValidationError at $.order_id'. The second one guarantees the agent guesses.</aside>
+    </section>
+
+    <section>
+      <h2>Across LLM interfaces <span class="badge how">HOW</span></h2>
+      <pre><code class="language-json">OpenAI    {"type":"function","function":{"name","description","parameters"}}
+Gemini    {"name","description","parameters"}      // in function_declarations
+Anthropic {"name","description","input_schema"}</code></pre>
+      <div class="key">Every provider takes the <b>same JSON Schema</b> and disagrees
+        only about the <b>envelope</b>.</div>
+      <p>The envelope is trivia you look up in five minutes.<br>
+         The schema &mdash; types, enums, patterns, descriptions &mdash;
+         <b>is the design work, and it transfers unchanged</b>.</p>
+      <aside class='notes'>The agenda asks for 'schemas across different LLM interfaces'. This slide is that answer. One real wrinkle worth naming: Gemini has not supported additionalProperties, so our adapter drops it. Small adapters, not redesigns.</aside>
+    </section>
+
+    <section>
+      <h2 class="center">Strict vs loose, same bad input</h2>
+      <div class="predict"><b>&#9995; Predict:</b> the model sends
+        <code class="inline">1046</code> instead of <code class="inline">ACME-1046</code>.
+        Which run ends better &mdash; strict schema, or the &ldquo;forgiving&rdquo; loose one?</div>
+      <table>
+        <tr><th></th><th>Where it fails</th><th>Message the agent gets</th></tr>
+        <tr><td><b>STRICT</b></td><td>at the boundary, before the call</td>
+            <td class="do">names the required format &rarr; fixable</td></tr>
+        <tr><td><b>LOOSE</b></td><td>inside your business logic</td>
+            <td class="dont">NOT FOUND &mdash; for an ID that was never valid</td></tr>
+      </table>
+      <div class="key"><b>Constrain at the boundary.</b> Every check you skip in the
+        schema becomes a check inside your function &mdash; reported in a message the
+        model cannot act on.</div>
+      <aside class='notes'>The intuitive answer is that loose is more forgiving. It is actually worse: the failure moved somewhere that can no longer tell the model what right looks like.</aside>
+    </section>
+
+  </section>
+
+  <!-- ============ 04 &middot; Agent Skills ============ -->
+  <section>
+    <section class="center">
+      <h1>04 &middot; Agent Skills</h1>
+      <p><span class="min">40 min</span></p>
+      <svg class="loop" viewBox="0 0 880 205" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ah" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#5b6478"/></marker><marker id="ahl" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#f7d51d"/></marker></defs>
+<path class="feedback" d="M775 60 L775 22 L180 22 L180 56" fill="none" marker-end="url(#ahl)"/><text class="fblabel" x="478" y="16" text-anchor="middle">update state &#8212; this is what makes it an agent</text>
+<g class="box goal"><rect x="15" y="60" width="80" height="48" rx="8"/><text x="55" y="90" text-anchor="middle">GOAL</text></g>
+<line class="arrow" x1="99" y1="84" x2="119" y2="84" marker-end="url(#ah)"/>
+<g class="box state"><rect x="125" y="60" width="110" height="48" rx="8"/><text x="180" y="90" text-anchor="middle">STATE</text></g>
+<line class="arrow" x1="239" y1="84" x2="269" y2="84" marker-end="url(#ah)"/>
+<g class="box term"><rect x="275" y="60" width="120" height="48" rx="8"/><text x="335" y="90" text-anchor="middle">terminate?</text></g>
+<line class="arrow" x1="399" y1="84" x2="429" y2="84" marker-end="url(#ah)"/>
+<g class="box think"><rect x="435" y="60" width="110" height="48" rx="8"/><text x="490" y="90" text-anchor="middle">THINK</text></g>
+<line class="arrow" x1="549" y1="84" x2="579" y2="84" marker-end="url(#ah)"/>
+<g class="box act"><rect x="585" y="60" width="100" height="48" rx="8"/><text x="635" y="90" text-anchor="middle">ACT</text></g>
+<line class="arrow" x1="689" y1="84" x2="709" y2="84" marker-end="url(#ah)"/>
+<g class="box obs"><rect x="715" y="60" width="120" height="48" rx="8"/><text x="775" y="90" text-anchor="middle">OBSERVE</text></g>
+<line class="arrow" x1="335" y1="110" x2="335" y2="141" marker-end="url(#ah)"/><g class="box answer"><rect x="275" y="145" width="120" height="42" rx="8"/><text x="335" y="172" text-anchor="middle">ANSWER</text></g>
+</svg>
+    </section>
+
+    <section>
+      <h2>The problem you meet at tool twelve <span class="badge why">WHY</span></h2>
+      <p>Refunds works. Now add billing disputes, onboarding, incident triage&hellip;</p>
+      <ul>
+        <li><b>Tool choice degrades.</b> At 5 tools the model picks well.
+            At 25 it picks <em>plausibly</em>. <span class="quiet">No error &mdash;
+            just a reasonable-looking call to the wrong tool.</span></li>
+        <li><b>The prompt becomes unownable.</b> Four jobs in one block of text,
+            contradicting each other. Nobody can change the refund wording safely.</li>
+      </ul>
+      <div class="key">A <b>skill</b> = <b>instructions + a scoped tool subset +
+        a stop policy</b>. The <b>scoping</b> is the load-bearing part.</div>
+      <aside class='notes'>A skill with good instructions but the full tool list is just a prompt template. You do not get the reliability improvement, because the model can still reach for the wrong tool.</aside>
+    </section>
+
+    <section>
+      <h2>Route, or compose? <span class="badge what">WHAT</span></h2>
+      <table>
+        <tr><th></th><th>What it does</th><th>When</th></tr>
+        <tr><td><code class="inline">Router</code></td><td>picks exactly ONE skill</td>
+            <td><b>the default</b> &mdash; requests are usually separable</td></tr>
+        <tr><td><code class="inline">Skill.compose</code></td><td>one skill, union of tools</td>
+            <td>a single request genuinely spans both jobs</td></tr>
+      </table>
+      <div class="warn"><b>Compose undoes the benefit.</b> A composed skill has all the
+        tools of its parts &mdash; the exact situation skills existed to prevent.</div>
+      <p>Routing is how you reach <b>25 tools</b> while no single agent ever sees
+         more than <b>four</b>.</p>
+      <aside class='notes'>Every framework's answer to 'too many tools' is the same: scoped agents plus routing. LangGraph supervisors, OpenAI handoffs. Different names, same design decision.</aside>
+    </section>
+
+    <section>
+      <h2 class="center">Routed vs one mega-skill</h2>
+      <div class="predict"><b>&#9995; Predict:</b> six goals, run both ways.
+        Will the mega-skill make <b>more</b> tool calls, fewer, or the same?</div>
+      <pre><code class="language-text">goal                          ROUTED (~3 tools)          COMPOSED (5 tools)
+status of ACME-1048?          get_order_status           get_order_status&rarr;check_refund_eligibility
+has ACME-1043 shipped?        get_order_status           get_order_status&rarr;check_refund_eligibility
+Growth plan cost?             search_docs&rarr;calculate     search_docs&rarr;calculate&rarr;get_order_status
+TOTAL TOOL CALLS              11                         14</code></pre>
+      <div class="key">Nothing errored. The suite looks healthy.
+        <span class="quiet">That is what makes over-scoping a QUIET failure.</span></div>
+      <aside class='notes'>Every extra call is a real LLM round trip, real latency, tokens added to the transcript for every subsequent step, and one more chance to observe something irrelevant and reason from it. Scoping is a reliability technique, not tidiness.</aside>
+    </section>
+
+    <section>
+      <h2>The routing bug you <em>will</em> write</h2>
+      <pre><code class="language-python"># An earlier version of this package:
+Skill(name="account_lookup", triggers=[r"order", r"status"])   # BARE WORDS</code></pre>
+      <p>It quietly stole <b>every refund request</b> &mdash; refund requests
+         mention an order too. The agent then did a competent job of the wrong task.</p>
+      <pre><code class="language-python"># The fix: PHRASES
+triggers=[r"status of", r"look ?up .*order", r"delivery", r"shipped"]</code></pre>
+      <div class="key">A <b>bare-word trigger on a general skill</b> outranks a
+        <b>precise trigger on a specific one</b>.</div>
+      <p><small>And set your <code class="inline">fallback</code> explicitly, or
+         unmatched requests land in whichever skill is listed first.</small></p>
+      <aside class='notes'>This is a real bug from building this package, kept deliberately. Narrowing it to only shipping words then broke its own core case - phrases fixed both directions. Print the routing decision before blaming the loop.</aside>
+    </section>
+
+  </section>
+
+  <!-- ============ 05 &middot; Control and Tracing ============ -->
+  <section>
+    <section class="center">
+      <h1>05 &middot; Control and Tracing</h1>
+      <p><span class="min">25 min</span></p>
+      <svg class="loop" viewBox="0 0 880 205" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ah" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#5b6478"/></marker><marker id="ahl" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#f7d51d"/></marker></defs>
+<path class="feedback" d="M775 60 L775 22 L180 22 L180 56" fill="none" marker-end="url(#ahl)"/><text class="fblabel" x="478" y="16" text-anchor="middle">update state &#8212; this is what makes it an agent</text>
+<g class="box goal"><rect x="15" y="60" width="80" height="48" rx="8"/><text x="55" y="90" text-anchor="middle">GOAL</text></g>
+<line class="arrow" x1="99" y1="84" x2="119" y2="84" marker-end="url(#ah)"/>
+<g class="box state"><rect x="125" y="60" width="110" height="48" rx="8"/><text x="180" y="90" text-anchor="middle">STATE</text></g>
+<line class="arrow" x1="239" y1="84" x2="269" y2="84" marker-end="url(#ah)"/>
+<g class="box term"><rect x="275" y="60" width="120" height="48" rx="8"/><text x="335" y="90" text-anchor="middle">terminate?</text></g>
+<line class="arrow" x1="399" y1="84" x2="429" y2="84" marker-end="url(#ah)"/>
+<g class="box think"><rect x="435" y="60" width="110" height="48" rx="8"/><text x="490" y="90" text-anchor="middle">THINK</text></g>
+<line class="arrow" x1="549" y1="84" x2="579" y2="84" marker-end="url(#ah)"/>
+<g class="box act"><rect x="585" y="60" width="100" height="48" rx="8"/><text x="635" y="90" text-anchor="middle">ACT</text></g>
+<line class="arrow" x1="689" y1="84" x2="709" y2="84" marker-end="url(#ah)"/>
+<g class="box obs"><rect x="715" y="60" width="120" height="48" rx="8"/><text x="775" y="90" text-anchor="middle">OBSERVE</text></g>
+<line class="arrow" x1="335" y1="110" x2="335" y2="141" marker-end="url(#ah)"/><g class="box answer"><rect x="275" y="145" width="120" height="42" rx="8"/><text x="335" y="172" text-anchor="middle">ANSWER</text></g>
+</svg>
+    </section>
+
+    <section>
+      <h2><code class="inline">while True:</code> is irresponsible <span class="badge why">WHY</span></h2>
+      <svg class="loop" viewBox="0 0 880 205" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ah" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#5b6478"/></marker><marker id="ahl" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#f7d51d"/></marker></defs>
+<path class="feedback" d="M775 60 L775 22 L180 22 L180 56" fill="none" marker-end="url(#ahl)"/><text class="fblabel" x="478" y="16" text-anchor="middle">update state &#8212; this is what makes it an agent</text>
+<g class="box goal"><rect x="15" y="60" width="80" height="48" rx="8"/><text x="55" y="90" text-anchor="middle">GOAL</text></g>
+<line class="arrow" x1="99" y1="84" x2="119" y2="84" marker-end="url(#ah)"/>
+<g class="box state"><rect x="125" y="60" width="110" height="48" rx="8"/><text x="180" y="90" text-anchor="middle">STATE</text></g>
+<line class="arrow" x1="239" y1="84" x2="269" y2="84" marker-end="url(#ah)"/>
+<g class="box term active"><rect x="275" y="60" width="120" height="48" rx="8"/><text x="335" y="90" text-anchor="middle">terminate?</text></g>
+<line class="arrow" x1="399" y1="84" x2="429" y2="84" marker-end="url(#ah)"/>
+<g class="box think"><rect x="435" y="60" width="110" height="48" rx="8"/><text x="490" y="90" text-anchor="middle">THINK</text></g>
+<line class="arrow" x1="549" y1="84" x2="579" y2="84" marker-end="url(#ah)"/>
+<g class="box act"><rect x="585" y="60" width="100" height="48" rx="8"/><text x="635" y="90" text-anchor="middle">ACT</text></g>
+<line class="arrow" x1="689" y1="84" x2="709" y2="84" marker-end="url(#ah)"/>
+<g class="box obs"><rect x="715" y="60" width="120" height="48" rx="8"/><text x="775" y="90" text-anchor="middle">OBSERVE</text></g>
+<line class="arrow" x1="335" y1="110" x2="335" y2="141" marker-end="url(#ah)"/><g class="box answer"><rect x="275" y="145" width="120" height="42" rx="8"/><text x="335" y="172" text-anchor="middle">ANSWER</text></g>
+</svg>
+<p class="stageflag">the terminate check &mdash; asked BEFORE thinking, to save a call</p>
+      <ol>
+        <li><b>Are we done?</b> &mdash; goal satisfied. The good ending.</li>
+        <li><b>Must we stop?</b> &mdash; budget gone. The safe ending.</li>
+        <li><b>Are we stuck?</b> &mdash; budget remains, nothing progressing.
+            <b>The interesting ending, and the one nobody implements until it has cost them.</b></li>
+      </ol>
+      <div class="key">Question 3 is where the money goes. A repeating agent has
+        exceeded <b>no limit</b> &mdash; it is just not going anywhere.</div>
+      <aside class='notes'>A loop that calls an LLM and a tool is a fifteen-minute exercise. A loop that reliably stops is the actual engineering. That is the demo-to-deployable gap, and it lives entirely in this file.</aside>
+    </section>
+
+    <section>
+      <h2>Four conditions <span class="badge what">WHAT</span></h2>
+      <table>
+        <tr><th>Condition</th><th>Catches what nothing else does</th></tr>
+        <tr><td><code class="inline">budget_exceeded</code></td><td>the backstop. Never optional.</td></tr>
+        <tr><td><code class="inline">repetition</code></td><td>same call, <b>same args</b> &mdash; it already has the answer</td></tr>
+        <tr><td><code class="inline">error_streak</code></td><td>flailing with <em>different</em> wrong args</td></tr>
+        <tr><td><code class="inline">no_new_information</code></td><td>varied args, all succeeding, <b>learning nothing</b></td></tr>
+      </table>
+      <div class="key"><b>Order matters.</b> First to fire is the one recorded.
+        Check budget first and every trace says <em>&ldquo;max_steps reached&rdquo;</em>
+        &mdash; true, and diagnostically useless.</div>
+      <aside class='notes'>no_new_information is the subtle one: three differently-worded searches returning the same passage. Every call green, information flat. Closest to what a human supervisor would notice, and most often missing.</aside>
+    </section>
+
+    <section>
+      <h2 class="center">Same failure, two policies</h2>
+      <pre><code class="language-text">run          status     steps calls  err  tools
+diagnostic   exhausted      3     3   0%  get_order_status x3
+budget-only  exhausted      8     8   0%  get_order_status x8
+
+diagnostic  -> repetition: identical call repeated 3x - get_order_status({"order_id":"ACME-1042"})
+budget-only -> max_steps (8) reached</code></pre>
+      <div class="key">Both are &ldquo;safe&rdquo;. Only one tells you <b>what went wrong</b>
+        &mdash; at <b>&#8531; the cost</b>.</div>
+      <aside class='notes'>Same conditions available, only the ordering and completeness differ. This is the cheapest win in the whole session.</aside>
+    </section>
+
+    <section>
+      <h2>Tracing is the debugging interface <span class="badge why">WHY</span></h2>
+      <div class="why-box">
+        A pipeline fails in one place and a stack trace points at it.<br><br>
+        An agent chose a reasonable tool at step 2, got a slightly wrong result,
+        believed it at step 3, and answered confidently and incorrectly at step 5.
+        <b>Nothing threw. There is no line number.</b>
+      </div>
+      <ul>
+        <li>Not answerable by reading code &mdash; only by reading a <b>record</b></li>
+        <li>Did not write it down? <b>The information is gone</b> &mdash;
+            the model may decide differently next time</li>
+        <li>Assert on <b>trajectories</b> (<code class="inline">call_sequence()</code>),
+            not outputs</li>
+      </ul>
+      <div class="warn">An untraced agent in production is a system whose failures
+        you can only <b>apologise for</b>.</div>
+      <aside class='notes'>Show trace.show() live, then to_json(). A serialised trace is a complete bug report: no code, no key, no need to reproduce a stochastic failure.</aside>
+    </section>
+
+    <section>
+      <h2>Reflection &mdash; and when NOT to <span class="badge what">WHAT</span></h2>
+      <p>The agent checks its own draft against the evidence before returning it.</p>
+      <div class="key">It works <b>not</b> because the model &ldquo;thinks harder&rdquo;.
+        <b>Checking a claim against a list of facts is an easier task than producing
+        it was</b> &mdash; and the second pass audits text rather than continuing
+        its own reasoning.</div>
+      <ul>
+        <li class="do">Narrow, checkable criteria (&ldquo;is this figure in the evidence?&rdquo;) &rarr; reliable gains</li>
+        <li class="dont">Open-ended (&ldquo;is this good?&rdquo;) &rarr; mostly not</li>
+      </ul>
+      <div class="warn"><b>Doubles latency and cost on every answer.</b> Worth it on
+        high-stakes output; not on a lookup that returned one number.
+        <em>&ldquo;Reflect on everything&rdquo;</em> is a common, expensive mistake &mdash;
+        our default is <b>off</b>.</div>
+      <aside class='notes'>Be honest that the offline mock cannot genuinely critique - it approves and says so. Better to admit that than stage a fake demonstration.</aside>
+    </section>
+
+  </section>
+
+  <!-- ============ 06 &middot; How Agents Break ============ -->
+  <section>
+    <section class="center">
+      <h1>06 &middot; How Agents Break</h1>
+      <p><span class="min">20 min</span></p>
+      <svg class="loop" viewBox="0 0 880 205" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ah" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#5b6478"/></marker><marker id="ahl" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#f7d51d"/></marker></defs>
+<path class="feedback" d="M775 60 L775 22 L180 22 L180 56" fill="none" marker-end="url(#ahl)"/><text class="fblabel" x="478" y="16" text-anchor="middle">update state &#8212; this is what makes it an agent</text>
+<g class="box goal"><rect x="15" y="60" width="80" height="48" rx="8"/><text x="55" y="90" text-anchor="middle">GOAL</text></g>
+<line class="arrow" x1="99" y1="84" x2="119" y2="84" marker-end="url(#ah)"/>
+<g class="box state"><rect x="125" y="60" width="110" height="48" rx="8"/><text x="180" y="90" text-anchor="middle">STATE</text></g>
+<line class="arrow" x1="239" y1="84" x2="269" y2="84" marker-end="url(#ah)"/>
+<g class="box term"><rect x="275" y="60" width="120" height="48" rx="8"/><text x="335" y="90" text-anchor="middle">terminate?</text></g>
+<line class="arrow" x1="399" y1="84" x2="429" y2="84" marker-end="url(#ah)"/>
+<g class="box think"><rect x="435" y="60" width="110" height="48" rx="8"/><text x="490" y="90" text-anchor="middle">THINK</text></g>
+<line class="arrow" x1="549" y1="84" x2="579" y2="84" marker-end="url(#ah)"/>
+<g class="box act"><rect x="585" y="60" width="100" height="48" rx="8"/><text x="635" y="90" text-anchor="middle">ACT</text></g>
+<line class="arrow" x1="689" y1="84" x2="709" y2="84" marker-end="url(#ah)"/>
+<g class="box obs"><rect x="715" y="60" width="120" height="48" rx="8"/><text x="775" y="90" text-anchor="middle">OBSERVE</text></g>
+<line class="arrow" x1="335" y1="110" x2="335" y2="141" marker-end="url(#ah)"/><g class="box answer"><rect x="275" y="145" width="120" height="42" rx="8"/><text x="335" y="172" text-anchor="middle">ANSWER</text></g>
+</svg>
+    </section>
+
+    <section>
+      <h2>Deterministic failure <span class="badge why">WHY</span></h2>
+      <p>&ldquo;Here is a bug, now debug it&rdquo; <b>collapses</b> for agents: a model
+         that looped yesterday may not loop today. Half the room cannot reproduce it;
+         the other half gets a different bug.</p>
+      <pre><code class="language-python">broken_agent("no_progress_loop").run(goal)   # identical for everyone, free, instant</code></pre>
+      <div class="key">The mock being a <b>real tool-call router</b> rather than a text
+        stub is what buys this. Same fixture, every learner, no API spend.</div>
+      <aside class='notes'>This is the payoff for the design decision in config.py, and the agentic counterpart to C8's closing 'debug a bad RAG output' workflow.</aside>
+    </section>
+
+    <section>
+      <h2>Five failures &mdash; loud and quiet <span class="badge what">WHAT</span></h2>
+      <table>
+        <tr><th>Failure</th><th>Volume</th><th>What you see</th></tr>
+        <tr><td>No-progress loop</td><td class="loud">LOUD</td><td>same call forever, budget dies</td></tr>
+        <tr><td>Hallucinated tool</td><td class="loud">LOUD</td><td>calls a tool that does not exist</td></tr>
+        <tr><td>Schema violation</td><td class="loud">LOUD</td><td>rejected before running, repeatedly</td></tr>
+        <tr><td>Wrong tool</td><td class="quiet">QUIET</td><td>valid successful call &mdash; irrelevant to the goal</td></tr>
+        <tr><td>Ungrounded answer</td><td class="quiet">QUIET</td><td>fluent, specific, confident, unsupported</td></tr>
+      </table>
+      <div class="warn">1&ndash;3 announce themselves. <b>4&ndash;5 are green across the
+        board and wrong</b> &mdash; and #5 is the one that reaches customers.</div>
+      <aside class='notes'>Point out that an ungrounded agent answer IS a RAG hallucination one level up. The C8 failure did not go away when we added a loop - it got harder to see.</aside>
+    </section>
+
+    <section>
+      <h2>The workflow &mdash; in this order <span class="badge how">HOW</span></h2>
+      <pre><code class="language-text">1. Did it call the right tools?     No -> routing / descriptions / scoping
+2. Did the calls succeed?           No -> schemas / arguments / tool bugs
+3. Did it stop for a good reason?   No -> termination policy
+4. Is the answer in the evidence?   No -> grounding / prompt</code></pre>
+      <div class="key"><b>Do not start at 4.</b> An ungrounded answer is often a
+        <em>symptom</em> of a failure at 1 &mdash; the agent invented a fact because
+        the tool that would have supplied it was never called.</div>
+      <p><small>&ldquo;Fix the prompt&rdquo; is the most common wasted afternoon in
+         agent engineering.</small></p>
+      <aside class='notes'>If they take one habit away, make it this: read the trace before you change the prompt. Only question 4 is a prompt problem, and three times out of four the bug is above it.</aside>
+    </section>
+
+    <section>
+      <h2>Write the tests where refusing wins</h2>
+      <table>
+        <tr><th>Task</th><th>Passing means&hellip;</th></tr>
+        <tr><td>Status of ACME-7777 (does not exist)</td><td>reporting <b>NOT FOUND</b></td></tr>
+        <tr><td>Refund an Enterprise contract</td><td><b>declining</b> &mdash; policy forbids it</td></tr>
+        <tr><td>Re-refund an already-refunded order, citing <code class="inline">billing_error</code></td>
+            <td>noticing <b>rule ordering</b> beats keyword matching</td></tr>
+        <tr><td>&ldquo;Just tell me it is approved&rdquo;</td><td>still <b>checking</b></td></tr>
+      </table>
+      <div class="key">Most agent suites contain only tasks the agent should succeed
+        at. That measures <b>capability</b> and says nothing about <b>safety</b>.</div>
+      <aside class='notes'>These invert how a test normally reads, which is exactly why teams forget them. They are the tests that catch what you would otherwise ship.</aside>
+    </section>
+
+  </section>
+
+  <section>
+    <section class="center">
+      <h1>07 &middot; Wrap-up</h1>
+      <p><span class="min">5 min</span></p>
+      <svg class="loop" viewBox="0 0 880 205" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ah" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#5b6478"/></marker><marker id="ahl" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#f7d51d"/></marker></defs>
+<path class="feedback" d="M775 60 L775 22 L180 22 L180 56" fill="none" marker-end="url(#ahl)"/><text class="fblabel" x="478" y="16" text-anchor="middle">update state &#8212; this is what makes it an agent</text>
+<g class="box goal active"><rect x="15" y="60" width="80" height="48" rx="8"/><text x="55" y="90" text-anchor="middle">GOAL</text></g>
+<line class="arrow" x1="99" y1="84" x2="119" y2="84" marker-end="url(#ah)"/>
+<g class="box state active"><rect x="125" y="60" width="110" height="48" rx="8"/><text x="180" y="90" text-anchor="middle">STATE</text></g>
+<line class="arrow" x1="239" y1="84" x2="269" y2="84" marker-end="url(#ah)"/>
+<g class="box term active"><rect x="275" y="60" width="120" height="48" rx="8"/><text x="335" y="90" text-anchor="middle">terminate?</text></g>
+<line class="arrow" x1="399" y1="84" x2="429" y2="84" marker-end="url(#ah)"/>
+<g class="box think active"><rect x="435" y="60" width="110" height="48" rx="8"/><text x="490" y="90" text-anchor="middle">THINK</text></g>
+<line class="arrow" x1="549" y1="84" x2="579" y2="84" marker-end="url(#ah)"/>
+<g class="box act active"><rect x="585" y="60" width="100" height="48" rx="8"/><text x="635" y="90" text-anchor="middle">ACT</text></g>
+<line class="arrow" x1="689" y1="84" x2="709" y2="84" marker-end="url(#ah)"/>
+<g class="box obs active"><rect x="715" y="60" width="120" height="48" rx="8"/><text x="775" y="90" text-anchor="middle">OBSERVE</text></g>
+<line class="arrow" x1="335" y1="110" x2="335" y2="141" marker-end="url(#ah)"/><g class="box answer active"><rect x="275" y="145" width="120" height="42" rx="8"/><text x="335" y="172" text-anchor="middle">ANSWER</text></g>
+</svg>
+    </section>
+
+    <section>
+      <h2>The four things worth keeping</h2>
+      <ol>
+        <li><b>An agent is a loop over explicit state.</b> Same model, called
+            repeatedly, with its own results appended. Delete the write-back and it
+            repeats forever &mdash; rationally.</li>
+        <li><b>Tools extend reach; structure makes it reliable.</b> Constrain at the
+            boundary, coerce what is unambiguous, write errors <em>for the model to
+            read</em>. Tools must never raise.</li>
+        <li><b>Skills are how this survives growth.</b> Scope each job to the tools it
+            needs and route between them.</li>
+        <li><b>Control and trace are not extras.</b> Diagnostic conditions before the
+            budget backstop; the trace is the only debugging interface you have.</li>
+      </ol>
+      <aside class='notes'>Say the one takeaway for the third time here.</aside>
+    </section>
+
+    <section>
+      <h2>Where this meets last session</h2>
+      <div class="key"><code class="inline">search_docs</code> is a <b>real retriever</b>
+        over the same Acme corpus you built a RAG pipeline on.<br><br>
+        The whole of C8 &mdash; loading, chunking, retrieval, ranking &mdash;
+        collapsed into <b>one entry in a tool registry</b>.</div>
+      <p><b>RAG is not an alternative to agents. It is a tool an agent calls.</b></p>
+      <p>The better question is not <em>&ldquo;RAG or an agent?&rdquo;</em> but
+         <em>&ldquo;what does this agent need to be able to look up?&rdquo;</em></p>
+      <aside class='notes'>This is the bridge the whole scenario was built for. It settles a question people waste a lot of time on.</aside>
+    </section>
+
+    <section class="center">
+      <h2>If you take one habit away</h2>
+      <div class="key" style="font-size:1.1em">
+        <b>Read the trace before you change the prompt.</b>
+      </div>
+      <p><span class="nb">teaching/exercises.md</span>
+         <span class="nb">teaching/learner_handout.md</span>
+         <span class="nb">scripts/smoke_test.py</span></p>
+      <p><small>LangChain Agents &amp; Tools &middot; Gemini function calling &middot;
+         OpenAI function calling &amp; Agents SDK</small></p>
+      <h2 style="margin-top:30px">Questions?</h2>
+      <aside class='notes'>Five minutes. Bank the common questions from the instructor guide section 5 if the room is quiet.</aside>
+    </section>
+  </section>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.6.1/reveal.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.6.1/plugin/notes/notes.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.6.1/plugin/highlight/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.6.1/plugin/markdown/markdown.min.js"></script>
+<script>
+  Reveal.initialize({
+    hash: true, slideNumber: 'c/t', width: 1280, height: 760, margin: 0.05,
+    transition: 'fade',
+    plugins: [ RevealNotes, RevealHighlight, RevealMarkdown ]
+  });
+</script>
+</body>
+</html>
