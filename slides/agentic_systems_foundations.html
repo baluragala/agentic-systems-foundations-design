@@ -142,8 +142,8 @@
         <tr><td>07</td><td>Wrap-up</td><td>Q&amp;A</td><td>5</td></tr>
       </table>
       <p><span class="nb">7 notebooks</span><span class="nb">agent_core/</span>
-         <span class="nb">runs with NO API key</span></p>
-      <aside class='notes'>Flag the keyless point early and loudly. Nobody should spend the first twenty minutes hunting for an API key. The offline mock DECIDES TOOL CALLS, so the entire loop runs offline and deterministically.</aside>
+         <span class="nb">needs an OpenAI key</span></p>
+      <aside class='notes'>Handle keys in the first five minutes. There is no offline fallback - the session calls a real model throughout, because a fake one cannot show what happens when tool descriptions overlap. Pair up anyone without a key.</aside>
     </section>
   </section>
 
@@ -661,7 +661,7 @@ budget-only -> max_steps (8) reached</code></pre>
         high-stakes output; not on a lookup that returned one number.
         <em>&ldquo;Reflect on everything&rdquo;</em> is a common, expensive mistake &mdash;
         our default is <b>off</b>.</div>
-      <aside class='notes'>Be honest that the offline mock cannot genuinely critique - it approves and says so. Better to admit that than stage a fake demonstration.</aside>
+      <aside class='notes'>Reflection costs a second model call on every answer. Say that out loud - the default is off for a reason.</aside>
     </section>
 
   </section>
@@ -695,8 +695,7 @@ budget-only -> max_steps (8) reached</code></pre>
          that looped yesterday may not loop today. Half the room cannot reproduce it;
          the other half gets a different bug.</p>
       <pre><code class="language-python">broken_agent("no_progress_loop").run(goal)   # identical for everyone, free, instant</code></pre>
-      <div class="key">The mock being a <b>real tool-call router</b> rather than a text
-        stub is what buys this. Same fixture, every learner, no API spend.</div>
+      <div class="key">FaultInjectingLLM wraps the <b>real</b> model and corrupts one thing on the way out. Same failure for everyone, and nothing about the demonstration is simulated.</div>
       <aside class='notes'>This is the payoff for the design decision in config.py, and the agentic counterpart to the RAG session's closing 'debug a bad RAG output' workflow.</aside>
     </section>
 

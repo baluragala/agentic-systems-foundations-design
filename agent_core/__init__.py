@@ -21,7 +21,10 @@ each one only depends on the ones above it:
     failures.py how it breaks, and how to see it  (a taxonomy + fault injection)
     agent.py    all of it, wired together
 
-Quick start — works with no API key at all:
+Quick start. Requires OPENAI_API_KEY — every notebook calls a real model, so
+that what you see is what you would get in production:
+
+    export OPENAI_API_KEY=sk-...
 
     from agent_core import Agent
     result = Agent().run("Is order ACME-1042 refundable? I was charged twice.")
@@ -31,12 +34,14 @@ Quick start — works with no API key at all:
 
 from .agent import Agent, AgentResult, score_suite
 from .config import (
+    FAULTS,
     AgentConfig,
     Decision,
-    MockToolCallLLM,
+    FaultInjectingLLM,
     ToolCall,
     current_config,
     get_llm,
+    have_api_key,
 )
 from .control import (
     TerminationCondition,
@@ -65,7 +70,9 @@ __all__ = [
     "AgentConfig",
     "Decision",
     "ToolCall",
-    "MockToolCallLLM",
+    "FaultInjectingLLM",
+    "FAULTS",
+    "have_api_key",
     "get_llm",
     "current_config",
     # state

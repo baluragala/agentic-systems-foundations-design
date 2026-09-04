@@ -1,5 +1,5 @@
 """
-Verify the enterprise reference implementation — no API key required.
+Verify the enterprise reference implementation — deterministic parts, no model needed.
 
 Everything except the ChatOpenAI call itself is exercised here: settings
 validation, guardrails, idempotency, the approval gate, the interrupt/resume
@@ -23,7 +23,8 @@ os.environ["ACME_LOG_LEVEL"] = "WARNING"
 from langchain_core.messages import AIMessage
 from langchain_core.outputs import ChatGeneration, ChatResult
 
-from agent_lc.fake_model import FakeToolCallingModel
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from _stub_model import ScriptedChatModel
 from acme_support_agent import (
     AuditLog, LEDGER, Settings, SupportAgent, check_input, check_output,
     default_cases, evaluate, needs_human_approval, redact, ungrounded_figures,
@@ -38,7 +39,7 @@ def check(label, cond, detail=""):
         fails.append(label)
 
 
-class ScriptedModel(FakeToolCallingModel):
+class ScriptedModel(ScriptedChatModel):
     """Deterministic: status -> eligibility -> issue_refund -> answer.
 
     BaseChatModel is a Pydantic model, so bare class attributes here would be

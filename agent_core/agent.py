@@ -92,7 +92,7 @@ class Agent:
     A configurable agent over a tool registry, optionally routed across skills.
 
     Args:
-        llm: Defaults to the configured provider (OpenAI, or the mock offline).
+        llm: Defaults to the configured provider (OpenAI). Requires a key.
         tools: Defaults to the full Acme toolbox.
         skill: A single Skill, or a Router over several. Defaults to a Router
             over the three Acme skills.

@@ -1,7 +1,7 @@
 # Exercises — Agentic Systems Foundations
 Worked solutions in [`solutions/solutions.md`](solutions/solutions.md). **Attempt each one before looking** — several are designed so that the obvious answer is wrong, and the value is in noticing that yourself.
 
-**Sections 01–06 and the capstone run with no API key.** Set one if you have it; the exercises are written so the lesson survives either way, and each says where the offline mock's limits show. The **Appendix** exercises cover the LangGraph track — three of the five still need no key, and the two that do are marked.
+**These exercises call a real model, so they need `OPENAI_API_KEY`.** Cost is small (`gpt-4o-mini`, tight budgets). Exercises marked *(no model)* are pure analysis — schemas, validation, routing logic — and cost nothing.
 
 ```python
 # Setup for every exercise
@@ -273,16 +273,16 @@ Run it across the whole task suite. **How many false positives?** What does that
 
 These need `OPENAI_API_KEY` unless marked otherwise.
 
-### Exercise A.1 — Port a termination condition ⭐⭐⭐ *(no key needed)*
+### Exercise A.1 — Port a termination condition ⭐⭐⭐ *(no model)*
 
 `agent_lc/graph.py` ports `repetition` and `error_streak` into a LangGraph conditional
 edge. **Port `no_new_information` too.**
 
-Test it with `FakeToolCallingModel` so the result is reproducible. Then answer: what did
+Test it with the fixture in `scripts/_stub_model.py` so the result is reproducible and free. Then answer: what did
 you have to change, and what did you copy almost verbatim? What does that tell you about
 how framework-specific `agent_core/control.py` really was?
 
-### Exercise A.2 — Prove the backstop is not a diagnosis ⭐⭐ *(no key needed)*
+### Exercise A.2 — Prove the backstop is not a diagnosis ⭐⭐
 
 Build the same looping agent two ways: once relying only on `recursion_limit`, once with
 `build_diagnostic_graph`.
@@ -290,7 +290,7 @@ Build the same looping agent two ways: once relying only on `recursion_limit`, o
 Report steps taken and the stop reason for each. Then write the two sentences you would
 say to a colleague who thinks `recursion_limit` means termination is handled.
 
-### Exercise A.3 — Break the reducer ⭐⭐⭐ *(no key needed)*
+### Exercise A.3 — Break the reducer ⭐⭐⭐
 
 In a copy of `build_agent_graph`, change the state schema from
 `Annotated[list[AnyMessage], add_messages]` to a plain `list[AnyMessage]`.

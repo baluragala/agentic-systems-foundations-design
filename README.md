@@ -23,7 +23,7 @@ The same agent is built three times, each one earning its place:
 | | **learn the mechanism** | **use the framework** | **deploy it** |
 | Stack | pure Python | LangGraph + LangChain | + approval, audit, guardrails, a service |
 | Used by | notebooks 01–07 | notebook 08 | **notebook 09** |
-| API key | not required | required | required |
+| API key | **required** | required | required |
 | Tools | read-only | read-only | **one that moves money** |
 
 The third track exists because the first two are safe to run in a classroom for
@@ -49,7 +49,7 @@ Both hold, and holding only one is how teams get hurt:
 ```
 agentic-systems-foundations/
 ├── agent_core/              # Reusable, from-scratch Python package (the "no magic" story)
-│   ├── config.py            #   provider factory + MockToolCallLLM (decides TOOL CALLS offline)
+│   ├── config.py            #   OpenAI adapter + FaultInjectingLLM (real model, one defect)
 │   ├── state.py             #   AgentState — the core of agent intelligence
 │   ├── loop.py              #   THINK → ACT → OBSERVE → UPDATE, in ~40 readable lines
 │   ├── tools.py             #   Tool, @tool, ToolRegistry — and "tools must never raise"
@@ -65,7 +65,7 @@ agentic-systems-foundations/
 │   ├── graph.py             #   the loop as a StateGraph (+ create_react_agent)
 │   ├── skills_lc.py         #   scoped subgraphs + keyword and LLM supervisors
 │   ├── tracing_lc.py        #   LangSmith setup + to_trace() so both tracks compare
-│   └── fake_model.py        #   a test double, so CI can verify graphs without a key
+│   └── faults.py            #   reproducible failures over a REAL model
 ├── acme_support_agent/      # The ENTERPRISE reference — a deployable agent
 │   ├── settings.py          #   config validated at boot, not at 3am
 │   ├── tools.py             #   the toolset + issue_refund (idempotent, guarded)
@@ -106,41 +106,46 @@ agentic-systems-foundations/
 
 ---
 
-## No API key? The whole session still runs.
+## Every notebook calls a real model
 
-This is the single most important operational fact, and it needed a different solution
-from the RAG session's.
+**`OPENAI_API_KEY` is required.** There is deliberately no simulated fallback
+anywhere in this package, and that is a teaching decision rather than an
+oversight.
 
-In the RAG package the offline mock only had to emit **text**, because a pipeline is a
-straight line and text was the last step. **An agent loops on a decision.** A text-only
-mock would leave a keyless learner unable to run notebooks 02–07 — which is to say,
-unable to do the session.
+A fake model can show you the *shape* of an agent loop. It cannot show you what
+happens when two of your tool descriptions overlap, when a schema is too loose,
+or when the model reads "order id" and confidently passes a customer id — and
+those moments are the entire subject of the session. A keyword router that never
+makes those mistakes teaches the wrong lesson twice: it hides the failure, and it
+implies agents are more predictable than they are.
 
-So `MockToolCallLLM` **decides tool calls**. It routes on your tool schemas, examples
-and descriptions; it tracks what it already called by reading the transcript, exactly as
-a real model does; and it answers **extractively** from observations, so it cannot
-hallucinate a fact. Everything it emits is labelled `[mock]`.
-
-It is also **transparent** — and that turns out to be a teaching asset:
-
-```python
-llm.explain_plan("Is order ACME-1042 refundable?", tools)
-# [mock] Routing plan for 'Is order ACME-1042 refundable?':
-#   1. check_refund_eligibility  (score 21)
-#        because goal contains a value matching order_id's format
-#        because matches example 'Can I get a refund for order ACME-1046?' on ['refund', 'order']
+```bash
+export OPENAI_API_KEY=sk-...
+# Colab: sidebar -> key icon -> add OPENAI_API_KEY -> Notebook access ON
 ```
 
-Tool selection stops being magic and becomes *"something matched the description you
-wrote"* — exactly the intuition a learner needs when their own tool never gets picked.
+Cost is small — `gpt-4o-mini`, step budgets of 8, and most cells make one or two
+calls. The whole session is well under a dollar per learner.
 
-And because it is deterministic, it doubles as the **fault injector** for notebook 06:
-`broken_agent("no_progress_loop")` reproduces a failure identically for everyone,
-instantly, with no API spend.
+### Reproducible failures, without faking the model
 
-> **Its limits, stated honestly:** it is a keyword router, not a language model. It does
-> not follow instructions and it will miss a goal phrased outside its vocabulary. Use it
-> to learn the *mechanics*; set a key to watch the mechanics do something impressive.
+Notebook 06 needs everyone to see the *same* failure, and real models are
+stochastic. `FaultInjectingLLM` wraps a **real** model and corrupts exactly one
+thing on the way out:
+
+```python
+from agent_core import broken_agent
+trace = broken_agent("no_progress_loop").run("What is the status of ACME-1042?").trace
+```
+
+The call goes out, a genuine response comes back, and one specific defect is
+deliberate. What you are studying — how the failure looks in a trace, which
+condition catches it, how you would diagnose it — is unaffected by the defect
+being injected, and nothing in the demonstration is a simulation.
+
+> `scripts/_stub_model.py` is a **test fixture**, used only by the check scripts
+> so CI can verify graph wiring without spending money on every commit. It is
+> never imported by the packages.
 
 ---
 
@@ -394,21 +399,30 @@ uvicorn acme_support_agent.service:app --reload
 Nothing here is asserted without being run:
 
 ```bash
-python scripts/smoke_test.py       # every agent_core module, under the offline mock
-python scripts/check_langgraph.py  # every agent_lc graph, via a keyless test double
+python scripts/smoke_test.py       # every deterministic part of agent_core
+python scripts/check_langgraph.py  # every agent_lc graph, via a test fixture
 python scripts/check_enterprise.py # guardrails, approval gate, interrupt/resume,
                                    #   idempotency, audit, eval gate, HTTP service
 python scripts/check_solutions.py  # every runnable claim in solutions.md
 ```
 
-All 9 notebooks execute top-to-bottom **with no API key** (cells needing a real model
-skip cleanly and say so), and all 15 tasks in the suite pass under the mock.
+The deterministic majority of the package — schemas, validation, tool dispatch,
+state, termination, tracing, skills, guardrails, the approval gate, idempotency,
+audit and the evaluation gate — is verified on every run with no key and no spend.
+The loop itself and the task suite need a key; those checks report `SKIP` without
+one rather than silently passing.
 
-> **One honest gap:** the `ChatOpenAI` path in `agent_lc` has not been executed against
-> the live API — there was no key available when this was built. The graph wiring,
-> schemas, routing, termination, checkpointing and trace adapter are all verified via the
-> test double; the model call itself is ~20 lines of LangChain you should run once before
-> teaching from it.
+> **The honest gap, stated plainly:** no code path that calls OpenAI has ever been
+> executed — there was no API key available when this was built. That now covers the
+> whole `agent_core` loop, `agent_lc`, and `acme_support_agent`, because the offline
+> fallback they used to share has been removed.
+>
+> What IS verified: every schema, validator, tool, guardrail, termination condition,
+> trace operation, router, graph shape, interrupt/resume cycle and audit path — all
+> executed in CI. What is NOT: the ~20 lines in each track that actually talk to the
+> API, and how a real model behaves against these prompts.
+>
+> **Run notebooks 01 and 06 once with a key before teaching from this.**
 
 ---
 

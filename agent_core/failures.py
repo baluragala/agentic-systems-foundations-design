@@ -9,8 +9,11 @@ reproducible.** A model that looped yesterday may not loop today. So the usual
 approach — "here is a bug, now debug it" — collapses, because half the room
 cannot reproduce the bug and the other half gets a different one.
 
-The fix is to make failure deterministic. `MockToolCallLLM` accepts a `fault`
-parameter, so every learner sees the identical failure, instantly, for free.
+The fix is to make failure deterministic *without* faking the model.
+`FaultInjectingLLM` wraps a real model and corrupts exactly one thing on the way
+out — a real call, a real response, one specific defect on purpose. Every learner
+sees the identical failure, and everything around the defect is genuine.
+
 This module wraps those faults in a catalogue that names each one, says how to
 recognise it in a trace, and says what actually fixes it.
 
@@ -67,7 +70,7 @@ class FailureMode:
 
     key: str
     name: str
-    fault: Optional[str]        # the MockToolCallLLM fault that reproduces it
+    fault: Optional[str]        # the FaultInjectingLLM fault that reproduces it
     loud: bool                  # loud failures announce themselves; quiet ones don't
     symptom: str                # what the user sees
     trace_signature: str        # what to look for in the trace
@@ -221,12 +224,14 @@ def broken_agent(key: str, **agent_kwargs):
     """
     An Agent guaranteed to exhibit failure mode `key`.
 
-    Deterministic, offline, free. This is what makes notebook 06 a genuine
-    debugging exercise rather than a lecture about debugging — everyone in the
-    room reproduces the identical failure and can compare their diagnoses.
+    Deterministic, and built on a real model rather than a fake one: the call
+    happens for real and exactly one thing is corrupted on the way out. That is
+    what makes notebook 06 a genuine debugging exercise — everyone reproduces
+    the identical failure and can compare diagnoses, without the demonstration
+    being a simulation.
     """
     from .agent import Agent
-    from .config import MockToolCallLLM
+    from .config import get_llm
 
     mode = CATALOGUE.get(key)
     if mode is None:
@@ -234,7 +239,9 @@ def broken_agent(key: str, **agent_kwargs):
     if mode.fault is None:
         raise ValueError(f"{key!r} has no injectable fault")
 
-    return Agent(llm=MockToolCallLLM(fault=mode.fault), **agent_kwargs)
+    # A REAL model, with one thing deliberately broken. Costs an API call per
+    # step, so keep budgets small when demonstrating these.
+    return Agent(llm=get_llm(fault=mode.fault), **agent_kwargs)
 
 
 # ---------------------------------------------------------------------------

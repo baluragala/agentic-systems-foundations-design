@@ -36,7 +36,7 @@ GOAL ─▶ ┌─ STATE ─▶ THINK ─▶ ACT ─▶ OBSERVE ─┐ ─▶ [t
 
 | Module | Responsibility |
 |---|---|
-| `config.py` | Provider-agnostic LLM factory. OpenAI default; `MockToolCallLLM` fallback. |
+| `config.py` | OpenAI adapter (key required) + `FaultInjectingLLM` for reproducible failures. |
 | `state.py` | `AgentState`: goal, messages, observations, step count, budget, status. |
 | `loop.py` | The think→act→observe cycle, short enough to read on one screen. |
 | `tools.py` | `Tool`, the `@tool` decorator, `ToolRegistry`, dispatch, error envelopes. |
@@ -48,13 +48,16 @@ GOAL ─▶ ┌─ STATE ─▶ THINK ─▶ ACT ─▶ OBSERVE ─┐ ─▶ [t
 | `agent.py` | Top-level `Agent` wiring it all together (the `pipeline.py` analogue). |
 | `acme_tools.py` | The Acme Cloud toolbox. |
 
-### 2. `MockToolCallLLM` — the critical design decision
+### 2. Reproducible failures over a real model
 
-In the RAG package's mock LLM only had to emit **text**. Here it must **decide tool calls**, or a keyless classroom cannot run notebooks 02–07 at all.
+Notebook 06 needs everyone to reproduce the *same* failure, and real models are
+stochastic. `FaultInjectingLLM` wraps a real model and corrupts exactly one thing
+on the way out — the call happens, a genuine response comes back, one defect is
+deliberate.
 
-`MockToolCallLLM` is a deterministic router: it matches the goal against the registered tool schemas, tracks which tools the message history already shows as called, emits the next call, and emits a final answer once it holds observations. It is labelled `[mock-llm]` in all output and never invents facts — it answers extractively from observations.
-
-It earns its keep twice: it is also the **fault injector** for notebook 06. Flip a flag and it loops forever, calls a nonexistent tool, or returns malformed arguments — reproducibly, on demand, with no API spend.
+This replaced an earlier `MockToolCallLLM` (see the amendment below): a fake
+model was cheaper and taught less, because learners rightly discount a
+demonstration in which nothing is real.
 
 ### 3. Acme Cloud toolbox
 
@@ -127,7 +130,7 @@ alongside the from-scratch one. Decisions taken:
 |---|---|
 | Scope | **Keep `agent_core`, add a parallel LangChain track.** From-scratch stays primary; the prose parallel-mappings become working code. |
 | Stack | **LangGraph + LangSmith** (not classic `AgentExecutor`). |
-| Keyless | **The new track requires `OPENAI_API_KEY`.** `agent_core` keeps its mock, so notebooks 01–07 still run keyless; LangGraph cells skip cleanly without a key. |
+| Keyless | Superseded — see the final amendment. |
 
 ### New component: `agent_lc/`
 
@@ -137,12 +140,12 @@ alongside the from-scratch one. Decisions taken:
 | `graph.py` | the loop as a `StateGraph`; a diagnostic-termination variant; `create_react_agent`; checkpointing |
 | `skills_lc.py` | scoped subgraphs, a keyword supervisor, and an LLM supervisor with structured output |
 | `tracing_lc.py` | LangSmith setup, plus `to_trace()` so both tracks share one comparison table |
-| `fake_model.py` | a **test double** so CI can verify graph wiring without a key — explicitly not a teaching path |
+| `faults.py` | reproducible failures over a real model (replaced `fake_model.py`) |
 
 ### Notebook changes
 
 - **02, 03, 04, 05** — the "HOW (parallel mapping)" sections now contain working LangGraph
-  code. The 03 and 05 mappings run **without a key**.
+  code.
 - **08 (new)** — `langgraph_production_track`, an **appendix outside the 180-minute
   clock**, walking the full translation table.
 
@@ -196,7 +199,7 @@ would leave nowhere to interrupt — the money would already have moved.
 
 ### Verification
 
-`scripts/check_enterprise.py` — 55 checks, no API key: settings validation,
+`scripts/check_enterprise.py` — 55 checks, no model needed: settings validation,
 guardrails, the approval-gate logic, the full interrupt/suspend/resume cycle,
 the denial path, idempotency, the tool's own self-defence, audit integrity, the
 evaluation gate, and the HTTP service including attribution enforcement.
@@ -213,6 +216,36 @@ against the live API.
   record was written twice per approval. Fixed with a `dedupe_key`; the rule is
   now documented in `audit.py`: **anything before an `interrupt()` must be safe
   to do twice.**
+
+## Amendment — the mock removed entirely
+
+Requested after the enterprise track: **drop the mock, use OpenAI.**
+
+| Was | Now |
+|---|---|
+| `MockToolCallLLM` as an offline provider | removed; `get_llm()` raises without a key |
+| `agent_lc/fake_model.py` | removed; replaced by `agent_lc/faults.py` |
+| notebooks fall back to the mock | notebooks **require** `OPENAI_API_KEY` and say so |
+| `broken_agent()` used a fake model | uses `FaultInjectingLLM` over a **real** model |
+
+**Rationale.** A simulated model shows the shape of an agent loop while
+misrepresenting the thing the session is actually about — how a real model
+behaves when tool descriptions overlap or a schema is loose. Those moments are
+the curriculum.
+
+**Reproducible failures survive.** `FaultInjectingLLM` (and `agent_lc/faults.py`)
+wrap a real model and corrupt one thing on the way out, so notebook 06 remains
+identical for every learner while nothing about it is fake.
+
+**Test fixtures remain, clearly separated.** `scripts/_stub_model.py` is imported
+only by the check scripts, never by the packages, so CI can verify graph wiring
+without spending money per commit.
+
+**Verification consequence, stated plainly.** With the offline provider gone, no
+code path that calls OpenAI can be executed here — there is no API key available.
+Verification now covers the deterministic majority (schemas, validation, tools,
+state, termination, tracing, skills, guardrails, approval, idempotency, audit,
+evaluation, graph wiring) and explicitly SKIPs the live loop and task suite.
 
 ## Out of scope
 

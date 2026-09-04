@@ -30,12 +30,12 @@ because `recursion_limit` only tells you the ceiling was hit.
 
 REQUIREMENTS
 ------------
-This track uses a real `ChatOpenAI` and needs `OPENAI_API_KEY`. That is
-deliberate — the point is to show production behaviour. For a keyless path, use
-`agent_core`, whose `MockToolCallLLM` is built for exactly that.
+Requires `OPENAI_API_KEY`. Every track in this package calls a real model —
+there is no simulated fallback anywhere, on purpose.
 
-(`fake_model.py` exists only so the test scripts can verify graph wiring without
-a key. It is not a teaching path.)
+For reproducible failures, `faults.py` wraps a real model and corrupts exactly
+one thing on the way out, so the failure taxonomy is identical for everyone
+without the demonstration being a simulation.
 
 QUICK START
 -----------
@@ -61,6 +61,13 @@ from .skills_lc import (
     LcSkill,
     acme_lc_skills,
     build_supervisor_graph,
+)
+from .faults import (
+    FAULT_MODELS,
+    bad_tool_name_chat_model,
+    looping_chat_model,
+    malformed_args_chat_model,
+    ungrounded_chat_model,
 )
 from .tools_lc import (
     ACME_TOOLS,
@@ -90,6 +97,9 @@ __all__ = [
     # skills
     "LcSkill", "KeywordSupervisor", "acme_lc_skills", "build_supervisor_graph",
     "BASE_INSTRUCTIONS",
+    # deterministic faults, over a real model
+    "looping_chat_model", "malformed_args_chat_model", "bad_tool_name_chat_model",
+    "ungrounded_chat_model", "FAULT_MODELS",
     # tracing
     "enable_langsmith", "langsmith_status", "to_trace", "summarise",
     "call_sequence", "final_answer", "show_messages",

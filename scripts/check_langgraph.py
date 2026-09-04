@@ -2,13 +2,15 @@
 Verify the LangGraph track's wiring — without an API key.
 
 The teaching path for `agent_lc` uses a real ChatOpenAI. This script uses the
-test double in `agent_lc.fake_model` so that graph construction, the cycle, the
+test fixture in `scripts/_stub_model.py` so that graph construction, the cycle, the
 reducer, termination and the trace adapter are all *executed* in CI rather than
 assumed. "It needs a key" is a reason to build a test double, not a reason to
 ship unverified graphs.
 
 Run:  python scripts/check_langgraph.py
 """
+import os
+import pathlib
 import sys
 
 from langchain_core.messages import HumanMessage
@@ -29,7 +31,13 @@ from agent_lc import (
     subset,
     to_trace,
 )
-from agent_lc.fake_model import FakeToolCallingModel
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+from _stub_model import (
+    ACME_LOOKUP_SCRIPT,
+    LoopingChatModel,
+    MalformedArgsChatModel,
+    ScriptedChatModel,
+)
 from agent_lc.tools_lc import ACME_TOOLS
 
 fails = []
@@ -45,7 +53,7 @@ def start(goal):
     return {"messages": [HumanMessage(goal)], "steps": 0, "stop_reason": None}
 
 
-model = FakeToolCallingModel()
+model = ScriptedChatModel(script=ACME_LOOKUP_SCRIPT)
 GOAL = "Is order ACME-1046 refundable? I changed my mind."
 
 # --- 1. tools & schemas -----------------------------------------------------
@@ -80,25 +88,30 @@ print("     trajectory:", " → ".join(call_sequence(out)))
 
 # --- 3. termination ---------------------------------------------------------
 print("\n=== 3. termination ===")
-looping = build_diagnostic_graph(FakeToolCallingModel(fault="loop_forever"), max_steps=8)
+looping = build_diagnostic_graph(LoopingChatModel(), max_steps=8)
 diag = looping.invoke(start("What is the status of order ACME-1042?"))
 check("diagnostic stops early", diag["steps"] < 8, diag["steps"])
 check("stop_reason names repetition", "repetition" in (diag["stop_reason"] or ""),
       diag["stop_reason"])
 
-budget = build_agent_graph(FakeToolCallingModel(fault="loop_forever"), max_steps=4)
+budget = build_agent_graph(LoopingChatModel(), max_steps=4)
 bud = budget.invoke(start("What is the status of order ACME-1042?"))
 check("budget backstop fires", bud["steps"] <= 4, bud["steps"])
 check("diagnostic beats budget-only", diag["steps"] < bud["steps"],
       f"diag={diag['steps']} budget={bud['steps']}")
 
-term = build_agent_graph(model, tools=subset("escalate_to_human"), max_steps=8)
+# Script the escalation explicitly — the model must request a tool that is
+# actually in scope, or it just errors and the terminal check proves nothing.
+escalator = ScriptedChatModel(
+    script=[("escalate_to_human", {"summary": "Customer needs a human for a billing problem."})]
+)
+term = build_agent_graph(escalator, tools=subset("escalate_to_human"), max_steps=8)
 esc = term.invoke(start("I need a human to look at this billing problem please"))
 check("terminal tool ends at once", esc["steps"] == 1, esc["steps"])
 
 # --- 4. tool errors never kill the graph ------------------------------------
 print("\n=== 4. tool errors are handled, not fatal ===")
-bad = build_agent_graph(FakeToolCallingModel(fault="malformed_args"), max_steps=4)
+bad = build_agent_graph(MalformedArgsChatModel(), max_steps=4)
 try:
     berr = bad.invoke(start(GOAL))
     tool_msgs = [m for m in berr["messages"] if getattr(m, "type", "") == "tool"]
@@ -149,13 +162,16 @@ check("adapter preserved trajectory", lc_trace.call_sequence() == call_sequence(
       (lc_trace.call_sequence(), call_sequence(out)))
 check("adapter computed an error rate", isinstance(lc_trace.error_rate(), float))
 
-import os
-os.environ["AGENT_LLM_PROVIDER"] = "mock"
-from agent_core import Agent
-core_trace = Agent().run(GOAL).trace
-print()
-print(compare({"from scratch": core_trace, "langgraph": lc_trace}))
-check("comparable across engines", True)
+# The cross-engine comparison needs a real model on both sides, so it only
+# runs when a key is present. The adapter itself is verified above.
+if os.getenv("OPENAI_API_KEY"):
+    from agent_core import Agent
+    core_trace = Agent().run(GOAL).trace
+    print()
+    print(compare({"from scratch": core_trace, "langgraph": lc_trace}))
+    check("comparable across engines", True)
+else:
+    print("     (cross-engine comparison skipped — needs OPENAI_API_KEY)")
 
 print()
 print("--- graph shape ---")

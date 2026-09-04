@@ -97,8 +97,7 @@ class Tool:
     # optional thing here: when a model keeps failing to pick a tool that
     # obviously applies, adding two or three example requests fixes it far more
     # often than rewriting the description again. Examples are shown to real
-    # models in the prompt and used by the offline mock's router, so improving
-    # them improves both.
+    # models in the prompt, so improving them improves tool selection directly.
     examples: List[str] = field(default_factory=list)
     # Result size cap. Tools that read documents or query APIs can return a lot,
     # and every character lands in the transcript on the NEXT step and every
@@ -209,7 +208,7 @@ class Tool:
         )
 
     def prompt_line(self) -> str:
-        """Plain-text rendering, for prompts and for the offline mock."""
+        """Plain-text rendering, for the tool inventory block in a prompt."""
         return describe_for_prompt(
             self.name, self.description, self.schema, self.examples
         )
@@ -358,7 +357,7 @@ class ToolRegistry:
         return [t.to_langchain() for t in self]
 
     def prompt_block(self) -> str:
-        """All tools as prompt text — used by the offline mock and by skills."""
+        """All tools as prompt text — used by skills to build their prompt."""
         return "\n".join(t.prompt_line() for t in self)
 
     def __str__(self) -> str:

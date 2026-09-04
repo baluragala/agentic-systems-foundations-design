@@ -306,9 +306,6 @@ def reflect(llm, state: AgentState, draft: str) -> Reflection:
     lookup that returned one unambiguous number. "Reflect on everything" is a
     common and expensive mistake, so the default in `agent.py` is off.
 
-    The offline mock cannot genuinely critique — it has no judgement — so it
-    approves and says so. That is honest rather than a fake demonstration; the
-    real behaviour needs a real model, and the notebook says so.
     """
     from .config import Decision  # local import keeps the dependency one-way
 
@@ -327,6 +324,6 @@ def reflect(llm, state: AgentState, draft: str) -> Reflection:
     )
     critique = (decision.content or "").strip()
 
-    if not critique or critique.upper().startswith("APPROVED") or "[mock]" in critique:
+    if not critique or critique.upper().startswith("APPROVED"):
         return Reflection(approved=True, original=draft, revised=draft, critique=critique)
     return Reflection(approved=False, original=draft, revised=critique, critique=critique)

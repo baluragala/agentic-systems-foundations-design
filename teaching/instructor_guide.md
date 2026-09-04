@@ -38,7 +38,7 @@ Thumbs up/down. You are calibrating, not gatekeeping:
 
 **If several are shaky on tool calling:** good — notebook 03 builds it from the schema up. Say so.
 **If several missed the RAG session:** the only dependency is conceptual (RAG = retriever + generator). `search_docs` works regardless.
-**If several lack API keys:** point at Section 2.3 immediately. **The entire session runs with no key.**
+**If several lack API keys:** this is the one blocker — the session calls a real model throughout. Have spare keys, or pair learners up. See Section 2.3.
 
 ---
 
@@ -59,28 +59,37 @@ Every notebook opens with the same two cells:
 
 ```python
 # Cell 1 — COLAB BOOTSTRAP: clones the repo if needed, makes agent_core importable
-# Cell 2 — CHOOSE YOUR PROVIDER: finds a key or falls back to the offline mock
+# Cell 2 — YOUR API KEY: finds a key, or RAISES with instructions
 ```
 
-`agent_core` has **no hard third-party dependency** — the loop is control flow, not numerics. `openai` and `jsonschema` are optional. The **LangGraph cells** in notebooks 02–05 need `langgraph`/`langchain-openai`; without them (or without a key) those cells skip cleanly and say so, so the notebook still runs end to end.
+The bootstrap installs whatever is **missing** rather than assuming an environment — it checks by import, so it works in Colab, a local venv, or a bare Jupyter. The provider cell then **raises** if there is no key, with instructions, rather than degrading to something fake.
 
-### 2.3 The mock — why the class ALWAYS runs
+### 2.3 Everyone needs a key — plan for it
 
-This is the most important operational fact of the session.
+This is the one hard operational requirement, so handle it in the first five
+minutes rather than discovering it at minute forty.
 
-In the RAG package's mock only had to emit *text*. An agent loops on a **decision**, so a text-only mock would leave a keyless learner unable to run notebooks 02–07 — i.e. unable to do the session. So `MockToolCallLLM` **decides tool calls**:
+The package has **no simulated fallback**. That is deliberate: a fake model
+cannot show what happens when two tool descriptions overlap or a schema is too
+loose, and those moments are the session. But it does mean a learner without a
+key can watch and not run.
 
-- It routes on the tool **schemas, examples and descriptions**, scoring each candidate.
-- It tracks what it already called by **reading the transcript** — exactly as a real model does.
-- It answers **extractively** from observations, so it cannot hallucinate a fact.
-- Everything it emits is labelled `[mock]`.
+**Before the session:** tell learners to bring a key, and say roughly what it
+costs — `gpt-4o-mini`, budgets of 8 steps, well under a dollar for the whole
+session.
 
-**Two teaching wins to use explicitly:**
+**On the day, for anyone without one:** pair them with someone who has one. Two
+people reading one trace and arguing about it is a genuinely good mode; it is
+how the predict-before-run cells are meant to be used anyway.
 
-1. `llm.explain_plan(goal, tools)` prints *why* it chose each tool, with scores. Tool selection stops being magic and becomes "something matched the description you wrote" — which is exactly the intuition a learner needs when their own tool never gets picked.
-2. It is the **fault injector** for section 06. `broken_agent("no_progress_loop")` reproduces a failure identically for everyone, instantly, free.
+**Reproducible failures (section 06)** do not need a fake model.
+`FaultInjectingLLM` wraps the *real* model and corrupts exactly one thing on the
+way out, so everyone sees the identical failure while the call itself is
+genuine. Say that out loud when you get there — learners discount a
+demonstration in which nothing is real, and rightly.
 
-**Be honest about its limits.** It is a keyword router, not a language model. It does not follow instructions, and it will miss a goal phrased outside its vocabulary. Say this once, early — a learner who thinks the mock *is* the lesson will draw wrong conclusions about model capability.
+> Watch the spend in section 06: each injected fault costs one call per step.
+> Keep those budgets at 4–6.
 
 ### 2.4 Setting a key (for learners who have one)
 
@@ -319,7 +328,7 @@ budget-only  exhausted  8 steps  -> max_steps (8) reached
 
 Show `trace.show()`, then `to_json()` → a complete bug report needing no code, no key, no reproduction. Then `call_sequence()`: **assert on trajectories, not outputs.**
 
-**2:33–2:35 — Reflection, briefly and honestly.** It works because *checking* a claim against facts is easier than *producing* it was — not because the model "thinks harder". It **doubles cost on every answer**, so the default is off. Say plainly that the offline mock cannot genuinely critique and approves instead; better an honest limitation than a staged demo.
+**2:33–2:35 — Reflection, briefly and honestly.** It works because *checking* a claim against facts is easier than *producing* it was — not because the model "thinks harder". It **doubles cost on every answer** — literally a second model call — so the default is off. Run the comparison cell and let the room see the extra call in the step count; that is a more persuasive argument than the paragraph is.
 
 **Discussion questions**
 
@@ -498,8 +507,8 @@ Try to draw the flowchart. If you can, write the flowchart — cheaper, faster, 
 
 ## 7. The LangGraph track — how to use it
 
-The package ships the same agent **twice**: `agent_core/` (from scratch, keyless) and
-`agent_lc/` (LangGraph + LangChain + LangSmith, needs a key). Notebooks 01–07 teach the
+The package ships the same agent **twice**: `agent_core/` (from scratch) and
+`agent_lc/` (LangGraph + LangChain + LangSmith). Both call a real model. Notebooks 01–07 teach the
 first; notebook 08 is an **appendix outside the 180-minute clock** that rebuilds it on
 the second.
 
@@ -508,14 +517,14 @@ the second.
 Notebooks 02–05 each end with a **HOW (parallel mapping)** section that now contains
 *working LangGraph code*, not just a table. Treat these as optional and time-dependent:
 
-| Notebook | Mapping section | Runs keyless? | Cut if behind |
+| Notebook | Mapping section | Costs a call? | Cut if behind |
 |---|---|---|---|
-| 02 | the loop as a `StateGraph` | ❌ needs a key | **yes** — it is a nice-to-have |
-| 03 | Pydantic `args_schema` | ✅ | **no** — 90 seconds, high value |
-| 04 | keyword vs LLM supervisor | ✅ (keyword half) | keep the keyword half |
-| 05 | `recursion_limit` vs diagnostic conditions | ✅ | **no** — this is the key caveat |
+| 02 | the loop as a `StateGraph` | yes | **yes** — it is a nice-to-have |
+| 03 | Pydantic `args_schema` | no — declarative | **no** — 90 seconds, high value |
+| 04 | keyword vs LLM supervisor | keyword half is free | keep the keyword half |
+| 05 | `recursion_limit` vs diagnostic conditions | yes | **no** — this is the key caveat |
 
-The 03 and 05 mappings run **without a key** and are the two worth protecting.
+The 03 mapping is declarative and free; 05 is the one caveat worth protecting even when short of time.
 
 ### The two sentences to say out loud
 
@@ -556,9 +565,8 @@ repo on Monday, notebook 08 is the version you would actually commit."* The caps
 
 ### Before you teach it
 
-`python scripts/check_langgraph.py` verifies the whole track offline. **Run notebook 08
-once with a real key first** — the `ChatOpenAI` path is the one part of the package that
-has never been exercised against the live API.
+`python scripts/check_langgraph.py` verifies the whole track offline. **Run notebooks 01, 06 and 08 once with a real key before teaching** — no code path
+that calls OpenAI has been exercised against the live API.
 
 ---
 

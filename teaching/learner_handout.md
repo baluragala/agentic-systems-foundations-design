@@ -2,6 +2,11 @@
 **180 minutes**
 Keep this open beside the notebooks. Everything here is take-home.
 
+> **You need an `OPENAI_API_KEY`.** Every notebook calls a real model — there is
+> no simulated fallback, because a fake model cannot show you how a real one
+> behaves when your tool descriptions are ambiguous, which is the whole subject.
+> Cost is small: `gpt-4o-mini`, tight step budgets, well under a dollar.
+
 > ## The one takeaway
 > **An agent is not a smarter model. It is a loop over explicit state.**
 > Tools give it reach, schemas give it reliability, skills give it scale, and the

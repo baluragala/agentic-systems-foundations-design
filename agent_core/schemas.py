@@ -475,10 +475,10 @@ def describe_for_prompt(
     """
     Render a tool as plain text for a prompt.
 
-    Needed for two real cases: models without native tool calling (you describe
-    tools in the system prompt and parse the reply), and the offline mock. It
-    also makes the point that "tool calling" is not magic — it is a structured
-    output convention layered on text generation.
+    Needed for models without native tool calling, where you describe the tools
+    in the system prompt and parse the reply. It also makes the point that "tool
+    calling" is not magic — it is a structured output convention layered on
+    ordinary text generation.
     """
     lines = [f"- {name}: {description}"]
     for prop, spec in schema.get("properties", {}).items():

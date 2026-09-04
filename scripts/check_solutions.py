@@ -3,7 +3,10 @@ import os
 import re
 from typing import Literal
 
-os.environ["AGENT_LLM_PROVIDER"] = "mock"
+# The package calls a real model. These checks verify the DETERMINISTIC claims
+# in solutions.md — schemas, validation, guardrail arithmetic — which need no
+# model at all. Claims requiring a live run are gated on a key.
+HAS_KEY = bool(os.getenv("OPENAI_API_KEY"))
 
 from agent_core import (Agent, Budget, ToolRegistry, TerminationPolicy, tool)
 from agent_core.control import TerminationCondition
@@ -78,11 +81,23 @@ def cost_ceiling(max_tokens_sent: int = 8000) -> TerminationCondition:
     return TerminationCondition("cost_ceiling", check_fn)
 
 
-policy = TerminationPolicy([cost_ceiling(1500), *TerminationPolicy.default()])
-run = Agent(policy=policy).run(
-    "Check the status of order ACME-1043 and whether I can refund it for changed_mind."
-)
-check("5.2 cost_ceiling fires", "cost_ceiling" in (run.state.stop_reason or ""), run.state.stop_reason)
+# The condition's LOGIC is checkable without a model: feed it a state whose
+# transcript is already over the ceiling and confirm it reports the right reason.
+from agent_core.state import AgentState
+condition = cost_ceiling(500)
+big = AgentState(goal="g").start("x" * 4000)
+check("5.2 cost_ceiling stays quiet under the limit", cost_ceiling(10**9)(big) is None)
+check("5.2 cost_ceiling fires over the limit", "cost_ceiling" in (condition(big) or ""), condition(big))
+
+if HAS_KEY:
+    policy = TerminationPolicy([cost_ceiling(1500), *TerminationPolicy.default()])
+    run = Agent(policy=policy).run(
+        "Check the status of order ACME-1043 and whether I can refund it for changed_mind."
+    )
+    check("5.2 fires in a live run", "cost_ceiling" in (run.state.stop_reason or ""),
+          run.state.stop_reason)
+else:
+    print("SKIP  5.2 live run (needs OPENAI_API_KEY); the condition logic passed above")
 
 # --- 6.4 check_grounding ----------------------------------------------------
 def check_grounding(result):
@@ -91,15 +106,33 @@ def check_grounding(result):
     return sorted(f for f in figures if len(f) > 2 and f not in evidence)
 
 
-from agent_core import broken_agent
-bad = broken_agent("ungrounded_answer").run("Is order ACME-1042 refundable? It was a billing_error.")
-ungrounded = check_grounding(bad)
-check("6.4 flags invented figures", len(ungrounded) > 0, ungrounded)
-print(f"       invented figures found: {ungrounded}")
+# check_grounding is pure text analysis — verify it directly against a synthetic
+# state rather than paying for a run to produce one.
+from agent_core.state import AgentState, Observation, ObservationStatus
 
-good = Agent().run("What is the status of order ACME-1046?")
-fp = check_grounding(good)
-print(f"       false positives on a good run: {fp}")
+class _Result:
+    def __init__(self, answer, results):
+        self.answer = answer
+        self.state = AgentState(goal="g")
+        for i, r in enumerate(results):
+            self.state.record_observation(
+                Observation(step=i, tool="t", args={}, status=ObservationStatus.OK, result=r))
+
+evidence = ["Order ACME-1046 ... Amount charged: $448.50."]
+check("6.4 flags an invented figure",
+      check_grounding(_Result("A refund of $412.00 was issued.", evidence)) == ["412.00"],
+      check_grounding(_Result("A refund of $412.00 was issued.", evidence)))
+check("6.4 does NOT flag a grounded figure",
+      check_grounding(_Result("You are owed $448.50.", evidence)) == [],
+      check_grounding(_Result("You are owed $448.50.", evidence)))
+
+if HAS_KEY:
+    from agent_core import broken_agent
+    bad = broken_agent("ungrounded_answer").run(
+        "Is order ACME-1042 refundable? It was a billing_error.")
+    print(f"       live ungrounded run flagged: {check_grounding(bad)}")
+else:
+    print("SKIP  6.4 live fault-injection run (needs OPENAI_API_KEY)")
 
 print()
 print("ALL SOLUTION CLAIMS VERIFIED" if not fails else f"FAILED: {fails}")
