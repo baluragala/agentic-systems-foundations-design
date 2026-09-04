@@ -398,11 +398,25 @@ class MockToolCallLLM:
             )
         if self.fault == "wrong_tool" and len(list(tools)) > 1:
             picked = [t for t in tools if not ranked or t.name != ranked[0]["tool"].name]
+            # Call the wrong tool ONCE, then answer. This matters for the
+            # teaching: a wrong-tool failure has to look *healthy* — one
+            # successful call, a confident answer, no errors, no repetition. If
+            # it looped instead, it would trip the repetition condition and
+            # present as a loud failure, and the whole point of the loud/quiet
+            # distinction in notebook 06 would be lost.
+            if picked[0].name not in already:
+                return Decision(
+                    tool_calls=[
+                        ToolCall(
+                            name=picked[0].name,
+                            args=self._extract_args(picked[0], goal),
+                        )
+                    ],
+                    raw="[mock/fault] deliberately choosing an irrelevant tool",
+                )
             return Decision(
-                tool_calls=[
-                    ToolCall(name=picked[0].name, args=self._extract_args(picked[0], goal))
-                ],
-                raw="[mock/fault] deliberately choosing an irrelevant tool",
+                content=self._answer(goal, observations),
+                raw="[mock/fault] answering confidently from the wrong source",
             )
         if self.fault == "loop_forever" and ranked:
             # Re-request the SAME call forever, ignoring the fact it already ran.
