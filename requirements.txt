@@ -21,11 +21,16 @@ tiktoken>=0.7          # token counting for step/context budgets
 #     production-grade parallel mapping shown in notebook 03) ---
 jsonschema>=4.21
 
-# --- LangChain (shown as PARALLEL MAPPING, not the primary focus) ---
-langchain>=0.2
-langchain-core>=0.2
-langchain-openai>=0.1
-langchain-community>=0.2
+# --- LangGraph / LangChain: the PRODUCTION TRACK (agent_lc/) ------------
+# agent_core teaches the mechanism from scratch; agent_lc rebuilds the same
+# agent on the stack you would actually deploy. This track uses a real
+# ChatOpenAI and needs OPENAI_API_KEY -- see README.
+langgraph>=1.0            # StateGraph, ToolNode, checkpointers, create_react_agent
+langchain-core>=1.0       # tools, messages, structured output
+langchain-openai>=1.0     # ChatOpenAI with native tool calling
+pydantic>=2.7             # tool argument schemas (args_schema)
+langsmith>=0.2            # tracing backend; optional, two env vars to enable
+grandalf>=0.8             # optional: ASCII graph rendering for draw()
 
 # --- Retrieval, for the search_docs tool (the C8 bridge) ---
 # The tool falls back to a pure-Python keyword scorer when these are absent,

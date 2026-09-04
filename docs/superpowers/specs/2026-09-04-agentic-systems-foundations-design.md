@@ -118,6 +118,51 @@ Total: **180 minutes.**
 
 The agenda's sixth row (*Analyse failures*) is served by notebook 06 and `failures.py`, and the recurring question keeps it present from notebook 01 onward.
 
+## Amendment — 2026-09-04: the LangGraph production track
+
+After the package was built, the user asked for an **enterprise-grade implementation**
+alongside the from-scratch one. Decisions taken:
+
+| Question | Decision |
+|---|---|
+| Scope | **Keep `agent_core`, add a parallel LangChain track.** From-scratch stays primary; the prose parallel-mappings become working code. |
+| Stack | **LangGraph + LangSmith** (not classic `AgentExecutor`). |
+| Keyless | **The new track requires `OPENAI_API_KEY`.** `agent_core` keeps its mock, so notebooks 01–07 still run keyless; LangGraph cells skip cleanly without a key. |
+
+### New component: `agent_lc/`
+
+| Module | Responsibility |
+|---|---|
+| `tools_lc.py` | the same five tools with Pydantic `args_schema` |
+| `graph.py` | the loop as a `StateGraph`; a diagnostic-termination variant; `create_react_agent`; checkpointing |
+| `skills_lc.py` | scoped subgraphs, a keyword supervisor, and an LLM supervisor with structured output |
+| `tracing_lc.py` | LangSmith setup, plus `to_trace()` so both tracks share one comparison table |
+| `fake_model.py` | a **test double** so CI can verify graph wiring without a key — explicitly not a teaching path |
+
+### Notebook changes
+
+- **02, 03, 04, 05** — the "HOW (parallel mapping)" sections now contain working LangGraph
+  code. The 03 and 05 mappings run **without a key**.
+- **08 (new)** — `langgraph_production_track`, an **appendix outside the 180-minute
+  clock**, walking the full translation table.
+
+### The two claims the track must make honestly
+
+1. **Where LangGraph is better:** state is a declared schema with reducers, so the
+   write-back cannot be silently omitted.
+2. **Where it is not:** `recursion_limit` is a backstop, not a diagnosis. The diagnostic
+   termination conditions still have to be written by hand, and are the thing teams most
+   often skip *because* the backstop looks like it covers them.
+
+### Verification
+
+`scripts/check_langgraph.py` executes every graph via the test double: schemas, the
+cycle, the reducer, diagnostic vs budget termination, terminal tools, tool-error
+handling, routing, `create_react_agent`, checkpointing, and the trace adapter.
+
+**Known gap:** the `ChatOpenAI` code path has not been run against the live API (no key
+available at build time). Everything else in the track is executed in CI.
+
 ## Out of scope
 
 Explicitly excluded by the user during design:

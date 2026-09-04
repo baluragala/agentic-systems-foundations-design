@@ -1,7 +1,7 @@
 # Instructor Guide — Agentic Systems Foundations
 
 **Format:** 180-minute hands-on session (C9-W1-S1)
-**Modality:** Live coding + discussion. 7 Colab-compatible notebooks driven from a shared `agent_core` package.
+**Modality:** Live coding + discussion. 7 Colab-compatible notebooks driven from a shared `agent_core` package, plus an appendix notebook (08) on the LangGraph production track.
 **Pedagogy:** Every section runs **WHY → WHAT → HOW**. HOW is **from-scratch first, LangChain as a parallel mapping**.
 **Recurring question (ask it every section):** ***"What does this step look like when it goes wrong — and where would you see it in the trace?"***
 
@@ -47,7 +47,7 @@ Thumbs up/down. You are calibrating, not gatekeeping:
 
 ### 2.1 What you need open
 
-- [ ] All 7 notebooks pre-loaded in Colab tabs, `01_agentic_foundations` … `07_wrap_up_end_to_end`.
+- [ ] All 7 session notebooks pre-loaded in Colab tabs, `01_agentic_foundations` … `07_wrap_up_end_to_end`. (Notebook 08 is take-home — see §7.)
 - [ ] `slides/agentic_systems_foundations.html` projected. Press **`s`** for the speaker-notes window.
 - [ ] The **loop diagram** — it is on every slide section header. Point at the active box each time you move on.
 - [ ] `data/tasks/agent_tasks.jsonl` open, for the negative-test discussion in section 06.
@@ -63,7 +63,7 @@ Every notebook opens with the same two cells:
 # Cell 2 — CHOOSE YOUR PROVIDER: finds a key or falls back to the offline mock
 ```
 
-`agent_core` has **no hard third-party dependency** — the loop is control flow, not numerics. `openai`, `jsonschema` and `langchain-core` are optional and only used where the notebook says so.
+`agent_core` has **no hard third-party dependency** — the loop is control flow, not numerics. `openai` and `jsonschema` are optional. The **LangGraph cells** in notebooks 02–05 need `langgraph`/`langchain-openai`; without them (or without a key) those cells skip cleanly and say so, so the notebook still runs end to end.
 
 ### 2.3 The mock — why the class ALWAYS runs
 
@@ -497,14 +497,83 @@ Try to draw the flowchart. If you can, write the flowchart — cheaper, faster, 
 
 ---
 
-## 7. Materials map
+## 7. The LangGraph track — how to use it
+
+The package ships the same agent **twice**: `agent_core/` (from scratch, keyless) and
+`agent_lc/` (LangGraph + LangChain + LangSmith, needs a key). Notebooks 01–07 teach the
+first; notebook 08 is an **appendix outside the 180-minute clock** that rebuilds it on
+the second.
+
+### In the session
+
+Notebooks 02–05 each end with a **HOW (parallel mapping)** section that now contains
+*working LangGraph code*, not just a table. Treat these as optional and time-dependent:
+
+| Notebook | Mapping section | Runs keyless? | Cut if behind |
+|---|---|---|---|
+| 02 | the loop as a `StateGraph` | ❌ needs a key | **yes** — it is a nice-to-have |
+| 03 | Pydantic `args_schema` | ✅ | **no** — 90 seconds, high value |
+| 04 | keyword vs LLM supervisor | ✅ (keyword half) | keep the keyword half |
+| 05 | `recursion_limit` vs diagnostic conditions | ✅ | **no** — this is the key caveat |
+
+The 03 and 05 mappings run **without a key** and are the two worth protecting.
+
+### The two sentences to say out loud
+
+> **"You should not hand-roll an agent framework in production."** Checkpointing,
+> streaming, retries, observability, human-in-the-loop — solved infrastructure.
+>
+> **"And a framework will not make any of your design decisions for you."**
+
+### The one caveat that matters most (notebook 05)
+
+`recursion_limit` is a **backstop, not a diagnosis**. It tells you the graph hit its
+ceiling. It never tells you the agent called the same tool with the same arguments five
+times.
+
+Say this explicitly, because it is counter-intuitive: **adopting LangGraph does not give
+you the thing section 05 argues is the actual engineering.** It gives you the safety net
+and leaves the diagnosis to you — and because the backstop *looks* like it covers the
+problem, the diagnostic conditions are what teams most often never write.
+`agent_lc/graph.py` shows the port, so the lesson has code behind it.
+
+### The one place LangGraph is genuinely better (notebook 02 / 08)
+
+State is a **declared schema with reducers**:
+
+```python
+messages: Annotated[list[AnyMessage], add_messages]
+```
+
+The write-back that section 02 proves is load-bearing becomes a property of the *field*.
+You can still get it wrong; you cannot silently omit it. That is a real improvement over
+what we hand-rolled, and saying so keeps the comparison honest.
+
+### Assigning notebook 08
+
+It is self-paced take-home. Point at it in the wrap-up: *"if you want to put this in a
+repo on Monday, notebook 08 is the version you would actually commit."* The capstone in
+`exercises.md` can be built on either track.
+
+### Before you teach it
+
+`python scripts/check_langgraph.py` verifies the whole track offline. **Run notebook 08
+once with a real key first** — the `ChatOpenAI` path is the one part of the package that
+has never been exercised against the live API.
+
+---
+
+## 8. Materials map
 
 | File | Use |
 |---|---|
 | `notebooks/01…07` | the session, in order |
 | `slides/agentic_systems_foundations.html` | project it; `s` for speaker notes |
 | `agent_core/` | every module opens with a WHY/WHAT/HOW docstring — read them for background |
+| `agent_lc/` | the LangGraph rebuild; `graph.py` is the one to read first |
+| `notebooks/08_langgraph_production_track.ipynb` | appendix — take-home, needs a key |
 | `data/tasks/agent_tasks.jsonl` | the task suite, incl. negative tests |
 | `teaching/learner_handout.md` | send before the session |
 | `teaching/exercises.md` + `solutions/` | homework and the capstone |
 | `scripts/smoke_test.py` | verify the environment before you teach; also a worked example of testing an agent |
+| `scripts/check_langgraph.py` | verifies the LangGraph track offline; a worked example of testing a graph |

@@ -328,7 +328,74 @@ The better question is not *"should I build RAG or an agent?"* but *"what does t
 
 ---
 
-## 12. Glossary
+## 12. From scratch → production (LangGraph)
+
+The same agent is built twice in this package. `agent_core/` is how you *learn* it;
+`agent_lc/` is how you *ship* it. Notebook 08 walks the translation.
+
+| `agent_core` (learn) | `agent_lc` (ship) |
+|---|---|
+| `while not done:` | `StateGraph` edges |
+| `AgentState` dataclass | `TypedDict` + **`add_messages` reducer** |
+| `llm.decide()` | the `agent` node, `model.bind_tools()` |
+| `ToolRegistry.dispatch()` | `ToolNode(handle_tool_errors=True)` |
+| `build_schema()` from docstrings | Pydantic `args_schema` |
+| `validate_args()` | Pydantic validation |
+| `TerminationPolicy` | conditional edge + `recursion_limit` |
+| `Skill` + `Router` | scoped subgraphs + a supervisor |
+| `Trace` | LangSmith run trees |
+| *(nothing)* | **checkpointers** — memory across invocations, resumption |
+
+### Where the framework is genuinely better
+
+State is a **declared schema with reducers**:
+
+```python
+class AgentState(TypedDict):
+    messages: Annotated[list[AnyMessage], add_messages]
+```
+
+The write-back that §1 calls "the whole idea" is now a property of the *field*. You can
+still get it wrong; you **cannot silently omit it**.
+
+### Where it genuinely is not — read this twice
+
+`recursion_limit` is a **backstop, not a diagnosis.** It tells you the graph hit its
+ceiling. It never tells you the agent called the same tool with the same arguments five
+times.
+
+> Adopting a framework does **not** hand you §7's diagnostic conditions. Repetition,
+> error streaks and no-new-information are still yours to write — and they are the ones
+> teams most often skip, precisely because the backstop *looks* like it covers them.
+
+### What is still yours after adopting any framework
+
+- the tool **descriptions and schemas** — nothing writes those for you
+- the **system prompt**
+- **which tools are in scope** for each job
+- every **diagnostic termination condition** beyond the backstop
+- whether tool errors are handled or fatal
+- what your tools return when they find nothing
+- your **negative tests**
+
+That list is this entire handout. **None of it was made obsolete by the framework** —
+which is exactly why you learned it from scratch first.
+
+> **The framework abstracts the mechanics, not the design decisions.**
+
+```python
+# The production quick start
+from langchain_openai import ChatOpenAI
+from agent_lc import build_prebuilt_agent, call_sequence, final_answer
+
+agent = build_prebuilt_agent(ChatOpenAI(model="gpt-4o-mini", temperature=0))
+out = agent.invoke({"messages": [("user", "Is order ACME-1046 refundable?")]})
+print(final_answer(out), call_sequence(out))
+```
+
+---
+
+## 13. Glossary
 
 | Term | Meaning |
 |---|---|
@@ -350,10 +417,16 @@ The better question is not *"should I build RAG or an agent?"* but *"what does t
 | **Terminal tool** | a tool whose success ends the run (e.g. `escalate_to_human`) |
 | **Grounding** | every claim in the answer traceable to an observation |
 | **Quiet failure** | a run where every call succeeded and the answer is still wrong |
+| **StateGraph** | LangGraph's agent loop — nodes, edges, and a declared state schema |
+| **Reducer** | how a state field updates when a node returns a value (`add_messages` appends) |
+| **ToolNode** | LangGraph's tool executor; `handle_tool_errors=True` is "tools must never raise" |
+| **Supervisor** | a routing node that picks one specialist — LangGraph's `Router` |
+| **Checkpointer** | persists graph state per `thread_id`, giving memory across invocations |
+| **`recursion_limit`** | LangGraph's hard backstop. A ceiling, **not** a diagnosis |
 
 ---
 
-## 13. Quick reference
+## 14. Quick reference
 
 ```python
 from agent_core import Agent, broken_agent, report, compare, Budget, TerminationPolicy

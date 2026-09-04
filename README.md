@@ -15,6 +15,28 @@ This is the successor to [`building-rag-pipelines`](https://github.com/baluragal
 `search_docs` here is a *real* retriever — which makes the bridge concrete rather than
 asserted: **RAG is not an alternative to agents; it is a tool an agent calls.**
 
+## Two tracks, one agent
+
+The same agent is built twice, on purpose:
+
+| | `agent_core/` — **learn the mechanism** | `agent_lc/` — **ship it** |
+|---|---|---|
+| Stack | pure Python, no framework | **LangGraph + LangChain + LangSmith** |
+| Used by | notebooks 01–07 (the 180-min session) | notebook 08 + the parallel-mapping cells |
+| API key | **not required** — deterministic mock | **requires `OPENAI_API_KEY`** |
+| Purpose | nothing is hidden; you can read every line | what you actually deploy |
+
+Both hold, and holding only one is how teams get hurt:
+
+1. **You should not hand-roll an agent framework in production.** Checkpointing,
+   streaming, retries, observability, human-in-the-loop — solved infrastructure.
+2. **A framework will not make any of your design decisions for you.** It will not choose
+   your enum values, write a description that says *when* to use a tool, decide what your
+   tool returns when it finds nothing, or notice that your agent called the same tool five
+   times.
+
+> **The framework abstracts the mechanics, not the design decisions.**
+
 ---
 
 ## What's in the box
@@ -33,14 +55,21 @@ agentic-systems-foundations/
 │   ├── failures.py          #   5-mode taxonomy + deterministic fault injection + diagnose()
 │   ├── agent.py             #   end-to-end Agent + task-suite runner
 │   └── acme_tools.py        #   the Acme toolbox (search_docs is the C8 bridge)
-├── notebooks/               # 7 Colab-compatible guided notebooks, one per agenda row
+├── agent_lc/                # The PRODUCTION track — same agent, on LangGraph
+│   ├── tools_lc.py          #   the five tools with Pydantic args_schema
+│   ├── graph.py             #   the loop as a StateGraph (+ create_react_agent)
+│   ├── skills_lc.py         #   scoped subgraphs + keyword and LLM supervisors
+│   ├── tracing_lc.py        #   LangSmith setup + to_trace() so both tracks compare
+│   └── fake_model.py        #   a test double, so CI can verify graphs without a key
+├── notebooks/               # 8 Colab-compatible guided notebooks
 │   ├── 01_agentic_foundations.ipynb    (20 min · conceptual + guided analysis)
 │   ├── 02_agent_loop_and_state.ipynb   (30 min · demo + guided coding)
 │   ├── 03_tools_and_schemas.ipynb      (40 min · guided coding)
 │   ├── 04_agent_skills.ipynb           (40 min · demo + guided practice)
 │   ├── 05_control_and_tracing.ipynb    (25 min · demonstration)
 │   ├── 06_failure_modes.ipynb          (20 min · guided analysis)
-│   └── 07_wrap_up_end_to_end.ipynb     (5 min  · Q&A)
+│   ├── 07_wrap_up_end_to_end.ipynb     (5 min  · Q&A)
+│   └── 08_langgraph_production_track.ipynb  (APPENDIX · outside the 180 min)
 ├── data/
 │   ├── corpus/              # Acme Cloud docs (from C8) + the refund policy
 │   ├── acme/orders.json     # 7 order records backing the structured tools
@@ -52,7 +81,7 @@ agentic-systems-foundations/
 │   ├── learner_handout.md       # take-home notes, cheat sheets, glossary
 │   ├── exercises.md             # graded practice per section + capstone
 │   └── solutions/solutions.md   # worked solutions
-├── scripts/  setup.sh · setup.ps1 · smoke_test.py
+├── scripts/  setup.sh · setup.ps1 · smoke_test.py · check_langgraph.py · check_solutions.py
 ├── requirements.txt  ·  .env.example  ·  .gitignore
 └── docs/superpowers/specs/      # design spec for this package
 ```
@@ -253,17 +282,53 @@ detectable against a statement of intent — which is what the task suite's
 
 ---
 
+## The translation table
+
+Notebook 08 walks this row by row:
+
+| `agent_core` (learn) | `agent_lc` (ship) |
+|---|---|
+| `while not done:` | `StateGraph` edges |
+| `AgentState` dataclass | `TypedDict` + **`add_messages` reducer** |
+| `llm.decide()` | the `agent` node, `model.bind_tools()` |
+| `ToolRegistry.dispatch()` | `ToolNode(handle_tool_errors=True)` |
+| `build_schema()` from docstrings | Pydantic `args_schema` |
+| `validate_args()` | Pydantic validation |
+| `TerminationPolicy` | conditional edge + `recursion_limit` |
+| `Skill` + `Router` | scoped subgraphs + a supervisor |
+| `Trace` | LangSmith run trees |
+| *(we had nothing)* | **checkpointers** — memory, resumption, interrupts |
+
+**Where LangGraph is genuinely better:** state is a *declared schema with reducers*. The
+write-back that notebook 02 proves is load-bearing becomes a property of the field, so it
+cannot be silently omitted.
+
+**Where it genuinely is not:** `recursion_limit` is a backstop, not a diagnosis. It tells
+you the ceiling was hit; it never tells you the agent called the same tool with the same
+arguments five times. Repetition, error streaks and no-new-information are still yours to
+write — and are the conditions teams most often skip, precisely because the backstop
+*looks* like it covers them.
+
+---
+
 ## Verification
 
 Nothing here is asserted without being run:
 
 ```bash
-python scripts/smoke_test.py     # exercises every module under the offline mock
+python scripts/smoke_test.py       # every agent_core module, under the offline mock
+python scripts/check_langgraph.py  # every agent_lc graph, via a keyless test double
+python scripts/check_solutions.py  # every runnable claim in solutions.md
 ```
 
-All 7 notebooks execute top-to-bottom **with no API key**, and all 15 tasks in the suite
-pass under the mock. That was the stated success bar for the package, and it is checked
-by execution rather than by claim.
+All 8 notebooks execute top-to-bottom **with no API key** (LangGraph cells that need a
+real model skip cleanly and say so), and all 15 tasks in the suite pass under the mock.
+
+> **One honest gap:** the `ChatOpenAI` path in `agent_lc` has not been executed against
+> the live API — there was no key available when this was built. The graph wiring,
+> schemas, routing, termination, checkpointing and trace adapter are all verified via the
+> test double; the model call itself is ~20 lines of LangChain you should run once before
+> teaching from it.
 
 ---
 
