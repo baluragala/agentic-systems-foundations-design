@@ -1,0 +1,32 @@
+# ---------------------------------------------------------------------------
+# Agentic Systems Foundations — ignored files
+# ---------------------------------------------------------------------------
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Secrets — NEVER commit real keys. `.env.example` IS committed.
+.env
+.env.local
+
+# Jupyter
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/
+
+# Agent run artefacts (traces are regenerated, not source)
+traces/
+*.trace.json
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
